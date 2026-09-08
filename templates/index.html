@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>M. Rezky Syahputra - Portfolio</title>
+    <title>{{ name }} - Portfolio</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
@@ -12,11 +12,11 @@
 <body>
     <header class="site-header">
         <div class="container">
-            <a href="#profile" class="brand">M. Rezky Syahputra</a>
+            <a href="{% url 'main:show_main' %}" class="brand">{{ name }}</a>
             <nav aria-label="Main Navigation">
-                <a href="#profile">Profile</a>
-                <a href="#experience">Experience</a>
-                <a href="#skills">Skills</a>
+                <a href="{% url 'main:show_main' %}">Profile</a>
+                <a href="{% url 'main:show_experience' %}">Experience</a>
+                <a href="{% url 'main:show_main' %}#skills">Skills</a>
             </nav>
         </div>
     </header>
@@ -26,96 +26,28 @@
             <div class="container hero-grid">
                 <div class="hero-identity">
                     <p class="hero-kicker">Computer Science &middot; Universitas Indonesia</p>
-                    <h1>M. Rezky Syahputra</h1>
+                    <h1>{{ name }}</h1>
                 </div>
                 <div class="hero-photo">
                     <div class="photo-block"></div>
-                    <img class="avatar" src="/static/img/foto-rezky.jpeg" alt="Photo of Rezky">
+                    <img class="avatar" src="/static/img/foto-rezky.jpeg" alt="Photo of {{ name }}">
                 </div>
                 <div class="hero-details">
-                    <p class="bio">Undergraduate CS student at the intersection of software engineering and Data Science. Passionate about building scalable web applications using Python & Django while applying Machine Learning and data analysis to solve complex problems.</p>
+                    <p class="bio">{{ bio }}</p>
                     <dl class="meta-list">
                         <div class="meta-row">
                             <dt>NPM</dt>
-                            <dd>2506614006</dd>
+                            <dd>{{ npm }}</dd>
                         </div>
                         <div class="meta-row">
                             <dt>Program</dt>
-                            <dd>S1 Ilmu Komputer</dd>
+                            <dd>{{ study_program }}</dd>
                         </div>
                     </dl>
                     <div class="social-links">
                         <a href="https://github.com/rezkyrise" class="social-link" target="_blank" rel="noopener noreferrer">GitHub</a>
                         <a href="https://www.linkedin.com/in/m-rezky-syahputra-03b42337b/" class="social-link" target="_blank" rel="noopener noreferrer">LinkedIn</a>
                         <a href="mailto:m.rezky@ui.ac.id" class="social-link">Email</a>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="experience-section" id="experience">
-            <div class="container">
-                <h2 class="section-title">Experience</h2>
-                <div class="experience-list">
-                    
-                    <!-- Experience 1: Asdos Kalkulus -->
-                    <div class="experience-card">
-                        <div class="exp-header">
-                            <h3>Teaching Assistant - Univariate Calculus</h3>
-                            <span class="exp-date">Aug 2026 - Present</span>
-                        </div>
-                        <p class="exp-org">Fakultas Ilmu Komputer, Universitas Indonesia</p>
-                        
-                        <div class="exp-body">
-                            <div class="exp-image">
-                                <img src="/static/img/exp-asdos.jpg" alt="Teaching Assistant Calculus">
-                            </div>
-                            <ul class="exp-bullets">
-                                <li>Facilitated weekly discussion and tutorial sessions for undergraduate students to reinforce core calculus concepts.</li>
-                                <li>Evaluated, graded, and provided structured feedback on weekly assignments and examination problem sets.</li>
-                                <li>Held one-on-one consultation sessions to help students overcome difficulties in mathematical logic and problem-solving.</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <!-- Experience 2: Staff BETIS -->
-                    <div class="experience-card">
-                        <div class="exp-header">
-                            <h3>Academic Staff & Tutor (Quantitative Reasoning)</h3>
-                            <span class="exp-date">Jan 2026 - May 2026</span>
-                        </div>
-                        <p class="exp-org">BETIS Fasilkom UI 2026</p>
-                        
-                        <div class="exp-body">
-                            <div class="exp-image">
-                                <img src="/static/img/exp-betis.jpeg" alt="Academic Staff & Tutor BETIS">
-                            </div>
-                             <ul class="exp-bullets">
-                                <li>Tutored underprivileged high school students in Quantitative Reasoning (Pengetahuan Kuantitatif) for UTBK exam preparation.</li>
-                                <li>Authored comprehensive learning modules, practice problem sets, and step-by-step solution keys.</li>
-                                <li>Monitored student progress through tryout evaluations and adapted teaching strategies to improve learning retention.</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <!-- Experience 3: BEM Staff Intern PKKM -->
-                    <div class="experience-card">
-                        <div class="exp-header">
-                            <h3>Staff Intern - Academic & Career Development</h3>
-                            <span class="exp-date">Sep 2025 - Nov 2025</span>
-                        </div>
-                        <p class="exp-org">BEM Fasilkom UI (Department of PKKM)</p>
-                        
-                        <div class="exp-body">
-                            <div class="exp-image">
-                                <img src="/static/img/exp-bem.jpg" alt="Staff Intern PKKM BEM Fasilkom UI">
-                            </div>
-                            <ul class="exp-bullets">
-                                <li>Assisted in organizing academic mentorship programs and career preparation workshops for Fasilkom UI students.</li>
-                                <li>Coordinated soft skill and hard skill training initiatives aimed at enhancing student readiness for competitions and academics.</li>
-                                <li>Managed publication workflows and promotional materials to drive student participation in departmental events.</li>
-                            </ul>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -167,7 +99,7 @@
 
     <footer class="site-footer">
         <div class="container">
-            <p>&copy; 2026 M. Rezky Syahputra. Fakultas Ilmu Komputer, Universitas Indonesia.</p>
+            <p>&copy; 2026 {{ name }}. Fakultas Ilmu Komputer, Universitas Indonesia.</p>
         </div>
     </footer>
 </body>
