@@ -154,3 +154,7 @@ MAILERS = {
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://m-rezky-myportofolio.pws.cs.ui.ac.id",
+]
