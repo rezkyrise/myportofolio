@@ -26,12 +26,23 @@
             <div class="container">
                 <h2 class="section-title">Skills</h2>
 
+                <div class="skill-filters">
+                    <button class="filter-btn active" data-filter="all">Semua</button>
+                    <button class="filter-btn" data-filter="language">Programming Language</button>
+                    <button class="filter-btn" data-filter="framework">Framework & Tool</button>
+                    <button class="filter-btn" data-filter="competency">Core Competency</button>
+                </div>
+
                 <div class="skills-grid">
                     {% for skill in skill_list %}
-                        <div class="skill-card">
+                        <div class="skill-card" data-category="{{ skill.category }}">
+                            {% if skill.icon_url %}
+                                <img src="{{ skill.icon_url }}" alt="{{ skill.name }}" class="skill-logo">
+                            {% else %}
+                                <div class="skill-logo-fallback">{{ skill.name|first }}</div>
+                            {% endif %}
                             <h3>{{ skill.name }}</h3>
-                            <p>{{ skill.get_category_display }}</p>
-                            <p>{{ skill.get_proficiency_display }}</p>
+                            <p class="skill-proficiency">{{ skill.get_proficiency_display }}</p>
                         </div>
                     {% empty %}
                         <p class="empty-state">
@@ -48,5 +59,29 @@
             <p>&copy; 2026 {{ name }}. Fakultas Ilmu Komputer, Universitas Indonesia.</p>
         </div>
     </footer>
+
+    <script>
+        const filterButtons = document.querySelectorAll(".filter-btn");
+        const skillCards = document.querySelectorAll(".skill-card");
+
+        filterButtons.forEach(function (button) {
+            button.addEventListener("click", function () {
+                filterButtons.forEach(function (btn) {
+                    btn.classList.remove("active");
+                });
+                button.classList.add("active");
+
+                const filter = button.dataset.filter;
+
+                skillCards.forEach(function (card) {
+                    if (filter === "all" || card.dataset.category === filter) {
+                        card.style.display = "";
+                    } else {
+                        card.style.display = "none";
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>

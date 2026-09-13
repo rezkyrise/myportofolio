@@ -37,13 +37,18 @@
                             {% endif %}
                             
                             <div class="experience-content">
+                                <h2>{{ experience.title }}</h2>
+                                {% if experience.organization %}
+                                    <p class="exp-org">{{ experience.organization }}</p>
+                                {% endif %}
                                 <span class="experience-category">
                                     {{ experience.get_category_display }}
                                 </span>
-                                <h2>{{ experience.title }}</h2>
-                                <p class="experience-description">
-                                    {{ experience.description }}
-                                </p>
+                                <ul class="exp-bullets">
+                                    {% for point in experience.bullet_points %}
+                                        <li>{{ point }}</li>
+                                    {% endfor %}
+                                </ul>
                                 {% if experience.is_ongoing %}
                                     <p class="experience-status">Ongoing</p>
                                 {% else %}
