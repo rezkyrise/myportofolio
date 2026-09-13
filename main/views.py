@@ -17,7 +17,7 @@ def show_main(request):
 
 
 def show_experience(request):
-    experiences = Experience.objects.all()
+    experiences = Experience.objects.all().order_by('started_at')
     for experience in experiences:
         experience.bullet_points = [
             line.strip() for line in experience.description.split("\n") if line.strip()
