@@ -6,21 +6,25 @@
     <main>
         <section class="skills-section" id="skill">
             <div class="container">
-                <div class="skill-header">
+                <div class="page-header">
                     <h2 class="section-title">Skills</h2>
-                    <a href="{% url 'main:create_skill' %}" class="button skill-add-button">
+                    <a href="{% url 'main:create_skill' %}" class="button add-button">
                         <span aria-hidden="true">+</span>
                         Tambah Skill
                     </a>
                 </div>
 
-                <form method="get" action="{% url 'main:show_skill' %}" class="skill-search">
+                <form method="get" action="{% url 'main:show_skill' %}" class="search-bar">
                     <input type="search"
                            name="name"
                            value="{{ name_query }}"
                            placeholder="Cari berdasarkan nama skill"
-                           class="skill-search__input"
+                           class="search-bar__input"
                            aria-label="Cari berdasarkan nama skill">
+                    <select name="sort" aria-label="Urutkan" onchange="this.form.submit()">
+                        <option value="asc" {% if sort == "asc" %}selected{% endif %}>Nama A-Z</option>
+                        <option value="desc" {% if sort == "desc" %}selected{% endif %}>Nama Z-A</option>
+                    </select>
                     <button type="submit" class="button">Cari</button>
                 </form>
 
@@ -41,7 +45,10 @@
                             {% endif %}
                             <h3>{{ skill.name }}</h3>
                             <p class="skill-proficiency">{{ skill.get_proficiency_display }}</p>
-                            {% include "components/skill_delete_modal.html" with skill=skill %}
+                            <div class="card-actions">
+                                <a href="{% url 'main:update_skill' skill.id %}" class="button button-small">Edit</a>
+                                {% include "components/skill_delete_modal.html" with skill=skill %}
+                            </div>
                         </div>
                     {% empty %}
                         <p class="empty-state">

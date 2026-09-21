@@ -41,6 +41,13 @@ class Skill(models.Model):
         ('advanced', 'Advanced'),
     ]
 
+    icon_slug = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+        help_text="Slug ikon dari devicon.dev, contoh: python/python-original",
+    )
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='language')

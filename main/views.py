@@ -20,51 +20,58 @@ def show_main(request):
 
 
 def show_experience(request):
-    experiences = Experience.objects.all().order_by('started_at')
+    json_response = get_experience_json(request)
+    experiences = serializers.deserialize("json", json_response.content.decode("utf-8"))
+    experiences = [e.object for e in experiences]
+
     for experience in experiences:
         experience.bullet_points = [
             line.strip() for line in experience.description.split("\n") if line.strip()
         ]
 
+    title_query = request.GET.get("title", "").strip()
+
     context = {
         "name": "M. Rezky Syahputra",
         "experience_list": experiences,
+        "title_query": title_query,
+        "sort": request.GET.get("sort", "title_asc"),
     }
     return render(request, "experience.html", context)
 
-SKILL_ICON_MAP = {
-    "python": "python/python-original",
-    "java": "java/java-original",
-    "c++": "cplusplus/cplusplus-original",
-    "html5": "html5/html5-original",
-    "css3": "css3/css3-original",
-    "javascript": "javascript/javascript-original",
-    "django": "django/django-plain",
-    "git & github": "git/git-original",
-    "vs code": "vscode/vscode-original",
-    "sqlite & postgresql": "postgresql/postgresql-original",
-    "latex": "latex/latex-original",
-}
+def update_skill(request, skill_id):
+    skill = get_object_or_404(Skill, pk=skill_id)
+    form = SkillForm(request.POST or None, instance=skill)
+
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Skill berhasil diperbarui!")
+        return redirect("main:show_skill")
+
+    context = {
+        "name": "M. Rezky Syahputra",
+        "form": form,
+        "skill": skill,
+    }
+    return render(request, "skill_form.html", context)
 
 
 def show_skill(request):
-    name_query = request.GET.get("name", "").strip()
-    skills = Skill.objects.all()
-
-    if name_query:
-        skills = skills.filter(name__icontains=name_query)
+    json_response = get_skill_json(request)
+    skills = serializers.deserialize("json", json_response.content.decode("utf-8"))
+    skills = [s.object for s in skills]
 
     for skill in skills:
-        slug = SKILL_ICON_MAP.get(skill.name.lower())
-        if slug:
-            skill.icon_url = f"https://cdn.jsdelivr.net/gh/devicons/devicon/icons/{slug}.svg"
-        else:
-            skill.icon_url = None
+        skill.icon_url = (
+            f"https://cdn.jsdelivr.net/gh/devicons/devicon/icons/{skill.icon_slug}.svg"
+            if skill.icon_slug else None
+        )
 
     context = {
         "name": "M. Rezky Syahputra",
         "skill_list": skills,
-        "name_query": name_query,
+        "name_query": request.GET.get("name", "").strip(),
+        "sort": request.GET.get("sort", "asc"),
     }
     return render(request, "skill.html", context)
 
@@ -86,13 +93,18 @@ def create_skill(request):
 
 def get_skill_json(request):
     name_query = request.GET.get("name", "").strip()
+    sort = request.GET.get("sort", "asc")
     skills = Skill.objects.all()
 
     if name_query:
         skills = skills.filter(name__icontains=name_query)
 
+    order_field = "name" if sort == "asc" else "-name"
+    skills = skills.order_by(order_field)
+
     skills_json = serializers.serialize("json", skills)
     return HttpResponse(skills_json, content_type="application/json")
+
 
 
 def delete_skill(request, skill_id):

@@ -6,19 +6,19 @@
     Hapus
 </button>
 <div id="delete-skill-{{ skill.id }}"
-     class="skill-delete-modal"
+     class="delete-modal"
      popover="auto"
      role="dialog"
      aria-modal="true"
      aria-labelledby="delete-skill-title-{{ skill.id }}">
     <button type="button"
-            class="skill-delete-modal__backdrop"
+            class="delete-modal__backdrop"
             popovertarget="delete-skill-{{ skill.id }}"
             popovertargetaction="hide"
             aria-label="Tutup konfirmasi hapus"></button>
-    <div class="skill-delete-modal__content">
+    <div class="delete-modal__content">
         <button type="button"
-                class="skill-delete-modal__close"
+                class="delete-modal__close"
                 popovertarget="delete-skill-{{ skill.id }}"
                 popovertargetaction="hide"
                 aria-label="Tutup konfirmasi hapus">×</button>
@@ -27,7 +27,7 @@
             Apakah Anda yakin ingin menghapus
             <strong>{{ skill.name }}</strong>?
         </p>
-        <div class="skill-delete-modal__actions">
+        <div class="delete-modal__actions">
             <button type="button"
                     class="button button-secondary"
                     popovertarget="delete-skill-{{ skill.id }}"
