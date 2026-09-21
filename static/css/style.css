@@ -36,7 +36,6 @@ h1, h2, h3, .brand {
     padding: 0 1.5rem;
 }
 
-/* Accessibility: skip link + focus states */
 .skip-link {
     position: absolute;
     top: -3rem;
@@ -62,7 +61,6 @@ button:focus-visible {
     outline-offset: 2px;
 }
 
-/* Header */
 .site-header {
     border-bottom: 1px solid var(--line);
 }
@@ -96,14 +94,13 @@ button:focus-visible {
     color: var(--accent-dark);
 }
 
-/* Hero */
 .hero {
     padding: 4.5rem 0 5rem;
 }
 
 .hero-grid {
     display: grid;
-    grid-template-columns: 1.3fr 1fr;
+    grid-template-columns: 1.3fr minmax(220px, 1fr);
     grid-template-areas:
         "identity photo"
         "details  photo";
@@ -207,13 +204,11 @@ button:focus-visible {
     border: 3px solid var(--ink);
 }
 
-/* Shared section title */
 .section-title {
     font-size: clamp(1.75rem, 4vw, 2.5rem);
     margin-bottom: 2.5rem;
 }
 
-/* Experience section */
 .experience-section {
     padding: 4rem 0;
     background-color: var(--paper-alt);
@@ -232,7 +227,6 @@ button:focus-visible {
     gap: 2rem;
 }
 
-/* Base Horizontal Card */
 .experience-card-wide {
     display: flex;
     background-color: var(--paper);
@@ -242,7 +236,6 @@ button:focus-visible {
     transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
 }
 
-/* Kartu Ganjil (Odd): Foto Kiri, Teks Kanan */
 .experience-card-wide.odd {
     flex-direction: row;
 }
@@ -251,7 +244,6 @@ button:focus-visible {
     border-right: 1px solid var(--line);
 }
 
-/* Kartu Genap (Even): Teks Kiri, Foto Kanan */
 .experience-card-wide.even {
     flex-direction: row-reverse;
 }
@@ -260,7 +252,6 @@ button:focus-visible {
     border-left: 1px solid var(--line);
 }
 
-/* Image Wrapper Settings */
 .experience-image-wrapper {
     flex-shrink: 0;
     width: 320px;
@@ -341,7 +332,6 @@ button:focus-visible {
     line-height: 1.5;
 }
 
-/* Hover Effect */
 .experience-card-wide:hover {
     background-color: #ffffff;
     border-color: var(--accent);
@@ -349,8 +339,12 @@ button:focus-visible {
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
 }
 
-/* Skills section */
-/* Skills section */
+.experience-period {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 0.1rem;
+}
+
 .skills-section {
     padding: 4rem 0 5rem;
 }
@@ -398,6 +392,7 @@ button:focus-visible {
     padding: 1.5rem;
     text-align: center;
     transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+    position: relative;
 }
 
 .skill-card:hover {
@@ -447,7 +442,6 @@ button:focus-visible {
     color: var(--text-muted);
 }
 
-/* Footer */
 .site-footer {
     padding: 1.5rem;
     color: var(--text-muted);
@@ -455,7 +449,6 @@ button:focus-visible {
     border-top: 1px solid var(--line);
 }
 
-/* Responsive */
 @media (max-width: 768px) {
     .experience-card-wide.odd,
     .experience-card-wide.even {
@@ -471,19 +464,30 @@ button:focus-visible {
     }
 }
 
-/* skill card delete button */
-.skill-card {
-    position: relative;
+@media (max-width: 600px) {
+    .hero-grid {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "identity"
+            "photo"
+            "details";
+    }
+
+    .hero-photo {
+        max-width: 220px;
+    }
+
+    .social-links {
+        justify-content: flex-start;
+    }
 }
 
-.button-small {
-    padding: 0.35rem 0.75rem;
-    font-size: 0.75rem;
-    margin-top: 0.75rem;
-}
+/* ===================================================== */
+/* Generic: dipakai bareng oleh Skill & Experience        */
+/* ===================================================== */
 
-/* ===== Form (Tambah Skill) ===== */
-.skill-form {
+/* ===== Form (Create/Update) ===== */
+.data-form {
     width: 100%;
     max-width: 100%;
     margin-top: 1.5rem;
@@ -555,8 +559,15 @@ button:focus-visible {
     margin-top: 0.75rem;
 }
 
-/* ===== Header halaman skill (judul + tombol tambah) ===== */
-.skill-header {
+.card-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.75rem;
+}
+
+/* ===== Header halaman list (judul + tombol tambah) ===== */
+.page-header {
     width: 100%;
     display: flex;
     justify-content: space-between;
@@ -565,26 +576,27 @@ button:focus-visible {
     margin-bottom: 1.5rem;
 }
 
-.skill-add-button {
+.add-button {
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
 }
 
-.skill-add-button span {
+.add-button span {
     font-size: 1.25rem;
     line-height: 1;
 }
 
 /* ===== Search bar ===== */
-.skill-search {
+.search-bar {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.75rem;
     margin-bottom: 1.5rem;
 }
 
-.skill-search__input {
-    width: 100%;
+.search-bar__input {
+    flex: 1 1 200px;
     min-width: 0;
     padding: 0.7rem;
     border: 1px solid var(--line);
@@ -592,15 +604,44 @@ button:focus-visible {
     background: #fff;
     color: var(--ink);
     font: inherit;
+    line-height: 1.4;
 }
 
-.skill-search__input:focus {
+.search-bar__input:focus {
     outline: 2px solid var(--accent);
     border-color: var(--accent);
 }
 
+.search-bar select {
+    flex: 0 0 auto;
+    width: 160px;
+    padding: 0.7rem 0.5rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: #fff;
+    color: var(--ink);
+    font: inherit;
+    line-height: 1.4;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236b6459'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z' clip-rule='evenodd'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.6rem center;
+    background-size: 1.1rem;
+    padding-right: 2rem;
+}
+
+.search-bar select:focus {
+    outline: 2px solid var(--accent);
+    border-color: var(--accent);
+}
+
+.search-bar .button {
+    flex: 0 0 auto;
+}
+
 /* ===== Modal konfirmasi hapus ===== */
-.skill-delete-modal {
+.delete-modal {
     display: none;
     position: fixed;
     inset: 0;
@@ -617,11 +658,11 @@ button:focus-visible {
     justify-content: center;
 }
 
-.skill-delete-modal:popover-open {
+.delete-modal:popover-open {
     display: flex;
 }
 
-.skill-delete-modal__backdrop {
+.delete-modal__backdrop {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -632,7 +673,7 @@ button:focus-visible {
     cursor: default;
 }
 
-.skill-delete-modal__content {
+.delete-modal__content {
     position: relative;
     z-index: 1;
     width: min(100%, 480px);
@@ -643,7 +684,7 @@ button:focus-visible {
     box-shadow: 0 1rem 3rem rgba(28, 25, 23, 0.22);
 }
 
-.skill-delete-modal__content h2 {
+.delete-modal__content h2 {
     margin: 0 0 0.75rem;
     font-family:
         "Space Grotesk",
@@ -652,7 +693,7 @@ button:focus-visible {
     font-size: 1.5rem;
 }
 
-.skill-delete-modal__close {
+.delete-modal__close {
     position: absolute;
     top: 1rem;
     right: 1rem;
@@ -665,7 +706,7 @@ button:focus-visible {
     cursor: pointer;
 }
 
-.skill-delete-modal__actions {
+.delete-modal__actions {
     display: flex;
     justify-content: flex-end;
     gap: 0.75rem;
@@ -673,40 +714,43 @@ button:focus-visible {
 }
 
 @media (max-width: 600px) {
-    .skill-header {
+    .page-header {
         align-items: flex-start;
         flex-direction: column;
     }
 
-    .skill-add-button {
+    .add-button {
         width: 100%;
         justify-content: center;
     }
 
-    .skill-search {
+    .search-bar {
         flex-direction: column;
     }
 
-    .skill-search .button {
+    .search-bar__input,
+    .search-bar select,
+    .search-bar .button {
         width: 100%;
+        flex: 1 1 auto;
     }
 
-    .skill-delete-modal {
+    .delete-modal {
         align-items: flex-end;
         padding: 0;
     }
 
-    .skill-delete-modal__content {
+    .delete-modal__content {
         width: 100%;
         padding: 1.25rem;
         border-radius: var(--radius) var(--radius) 0 0;
     }
 
-    .skill-delete-modal__actions {
+    .delete-modal__actions {
         flex-direction: column-reverse;
     }
 
-    .skill-delete-modal__actions .button {
+    .delete-modal__actions .button {
         width: 100%;
         text-align: center;
     }
