@@ -25,3 +25,17 @@ Seluruh kode yang dihasilkan telah saya pahami, uji jalankan sendiri (python man
 
 3. Makemigrations berfungsi membuat rencana perubahan (file migrasi) berdasarkan perbedaan models.py sekarang dengan riwayat migrasi sebelumnya. Ini tidak mengubah database, cuma menghasilkan file Python yang berisi instruksi "apa yang harus diubah", sedangkan migrate benar-benar menerapkan rencana perubahan dari file migrasi tersebut ke database (misalnya membuat tabel baru, menambah kolom, dll).
 Contoh: Ketika menambahkan field organization ke model Experience yang sudah ada, hal ini juga menjalankan makemigrations (menghasilkan 0004_experience_organization.py) lalu migrate (menerapkannya, menambahkan kolom baru organization ke tabel Experience yang sudah ada).
+
+### Tugas 3
+Deklarasi AI: 
+Dalam pengerjaan tugas ini, saya menggunakan bantuan Claude (Anthropic) untuk:
+Membantu memahami dan mengadaptasi materi Tutorial 3 (yang menggunakan model Project) ke model portofolio saya sendiri (Skill dan Experience), membantu debugging saat menemui error (NameError, TemplateDoesNotExist, error validasi format tanggal pada DateField, dsb), serta membantu menyusun ulang CSS agar konsisten antara komponen Skill dan Experience.
+Seluruh kode yang dihasilkan telah saya pahami, uji jalankan sendiri, dan disesuaikan dengan kebutuhan proyek saya. 
+
+1. Jika membuat form HTML manual, kita harus menulis sendiri semua validasi dan menulis kode utk memasukkan data ke model dan menyimpan ke database. Adanya ModelForm memudahkan kita karena otomatis menghasilkan field, widget, dan validasi berdasarkan struktur model yang sudah kita definisikan sehingga tidak perlu menulis ulang validasi dan proses penyimpanan data ke database secara manual. Field seperti category dan proficiency yang punya choices di model otomatis dirender sebagai dropdown, dan form.save() langsung menangani proses insert maupun update ke database. 
+{% csrf_token %} wajib ditambahkan untuk mencegah serangan Cross-Site Request Forgery, yaitu ketika situs jahat mengelabui browser korban untuk mengirim request ke aplikasi kita tanpa sepengetahuan korban. Token unik ini digenerate server dan dicocokkan saat form disubmit sehingga request yang tidak berasal dari form asli aplikasi kita akan ditolak.
+
+2. JSON lebih disukai dibanding XML dalam pengembangan web modern karena strukturnya lebih ringkas dan tidak memerlukan tag pembuka-penutup seperti XML sehingga ukuran datanya lebih kecil dan lebih efisien dikirim melalui jaringan. Selain itu, JSON bisa langsung diparsing oleh frontend tanpa parser tambahan seperti yang dibutuhkan XML. JSON juga lebih mudah dibaca manusia dan lebih didukung secara luas oleh ekosistem web modern.
+
+3. Ketika view seperti get_skill_json dipanggil, alurnya dimulai dari query ke database menggunakan Skill.objects.all() yang menghasilkan QuerySet berisi object-object Python. Karena HTTP hanya dapat mengirim data dalam bentuk teks atau bytes, object model Django tersebut perlu diubah dulu melalui proses serialization menggunakan serializers.serialize("json", skills) menjadi string berformat JSON, sebelum dibungkus ke dalam HttpResponse dan dikirim ke client. 
+Proses serialization ini penting karena object Python tidak bisa langsung dikirim melalui jaringan sehingga perlu diubah dulu ke format JSON yang berupa teks agar bisa dikirim lewat HTTP dan dibaca oleh sistem apa pun, baik itu JavaScript, aplikasi mobile, maupun bahasa pemrograman lain.
