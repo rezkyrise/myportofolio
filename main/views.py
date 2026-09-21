@@ -3,7 +3,7 @@ from django.core import serializers
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from main.models import Experience, Skill
-from main.forms import SkillForm
+from main.forms import SkillForm, ExperienceForm
 
 
 def show_main(request):
@@ -116,3 +116,66 @@ def delete_skill(request, skill_id):
         return redirect("main:show_skill")
 
     return redirect("main:show_skill")
+
+def create_experience(request):
+    form = ExperienceForm(request.POST or None, request.FILES or None)
+
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Experience baru berhasil ditambahkan!")
+        return redirect("main:show_experience")
+
+    context = {
+        "name": "M. Rezky Syahputra",
+        "form": form,
+    }
+    return render(request, "experience_form.html", context)
+
+
+def update_experience(request, experience_id):
+    experience = get_object_or_404(Experience, pk=experience_id)
+    form = ExperienceForm(request.POST or None, request.FILES or None, instance=experience)
+
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Experience berhasil diperbarui!")
+        return redirect("main:show_experience")
+
+    context = {
+        "name": "M. Rezky Syahputra",
+        "form": form,
+        "experience": experience,
+    }
+    return render(request, "experience_form.html", context)
+
+
+def delete_experience(request, experience_id):
+    experience = get_object_or_404(Experience, pk=experience_id)
+
+    if request.method == "POST":
+        experience.delete()
+        messages.success(request, "Experience berhasil dihapus!")
+        return redirect("main:show_experience")
+
+    return redirect("main:show_experience")
+
+
+def get_experience_json(request):
+    title_query = request.GET.get("title", "").strip()
+    sort = request.GET.get("sort", "title_asc")
+    experiences = Experience.objects.all()
+
+    if title_query:
+        experiences = experiences.filter(title__icontains=title_query)
+
+    sort_map = {
+        "title_asc": "title",
+        "title_desc": "-title",
+        "date_asc": "started_at",
+        "date_desc": "-started_at",
+    }
+
+    experiences = experiences.order_by(sort_map.get(sort, "title"))
+
+    experiences_json = serializers.serialize("json", experiences)
+    return HttpResponse(experiences_json, content_type="application/json")
