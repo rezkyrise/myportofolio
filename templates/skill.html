@@ -47,12 +47,15 @@
                             {% endif %}
                             <h3>{{ skill.name }}</h3>
                             <p class="skill-proficiency">{{ skill.get_proficiency_display }}</p>
-                            {% if user.is_superuser %}
                                 <div class="card-actions">
-                                    <a href="{% url 'main:update_skill' skill.id %}" class="button button-small">Edit</a>
-                                    {% include "components/skill_delete_modal.html" with skill=skill %}
+                                    {% include "components/skill_star.html" with skill=skill %}
+                                    {% if user.is_superuser or is_editor %}
+                                        <a href="{% url 'main:update_skill' skill.id %}" class="button button-small">Edit</a>
+                                    {% endif %}
+                                    {% if user.is_superuser %}
+                                        {% include "components/skill_delete_modal.html" with skill=skill %}
+                                    {% endif %}
                                 </div>
-                            {% endif %}
                         </div>
                     {% empty %}
                         <p class="empty-state">
