@@ -4,6 +4,7 @@ from main.views import (
     show_main,
     show_experience, create_experience, update_experience, delete_experience, get_experience_json,
     show_skill, create_skill, update_skill, delete_skill, get_skill_json,
+    register, login_user, logout_user,
 )
 
 
@@ -11,6 +12,9 @@ app_name = "main"
 
 urlpatterns = [
     path("", show_main, name="show_main"),
+    path("register/", register, name="register"),
+    path("login/", login_user, name="login"),
+    path("logout/", logout_user, name="logout"),
     path("experience/", show_experience, name="show_experience"),
     path("experience/add/", create_experience, name="create_experience"),
     path("experience/<uuid:experience_id>/update/", update_experience, name="update_experience"),
