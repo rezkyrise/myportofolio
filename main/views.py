@@ -7,6 +7,8 @@ from main.forms import SkillForm, ExperienceForm
 from django.contrib.auth import login, logout
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 import datetime
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 
 def register(request):
     form = UserCreationForm(request.POST or None)
@@ -117,8 +119,11 @@ def show_skill(request):
     }
     return render(request, "skill.html", context)
 
-
+@login_required(login_url="/login/")
 def create_skill(request):
+    if not request.user.is_superuser:
+        raise PermissionDenied
+     
     form = SkillForm(request.POST or None)
 
     if request.method == "POST" and form.is_valid():
