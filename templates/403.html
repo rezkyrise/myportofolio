@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block meta %}
+    <title>403 - Akses Ditolak</title>
+{% endblock meta %}
+{% block content %}
+    <main>
+        <section class="error-page">
+            <div class="container">
+                <p class="error-code">403</p>
+                <h1>Akses Ditolak</h1>
+                <p>
+                    {% if user.is_authenticated %}
+                        Kamu login sebagai <strong>{{ user.username }}</strong> ({{ user_role }}).
+                        Peran ini tidak punya izin untuk melakukan tindakan tersebut.
+                    {% else %}
+                        Kamu perlu login dengan akun yang berhak untuk melakukan tindakan ini.
+                    {% endif %}
+                </p>
+                <div class="error-actions">
+                    <a href="{% url 'main:show_main' %}" class="button">Kembali ke Beranda</a>
+                    {% if not user.is_authenticated %}
+                        <a href="{% url 'main:login' %}" class="button button-secondary">Login</a>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+    </main>
+{% endblock content %}
