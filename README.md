@@ -1,10 +1,23 @@
-Nama    : M. Rezky Syahputra
-NPM     : 2506614006
-Kelas   : PBP D
+- Nama    : M. Rezky Syahputra
+- NPM     : 2506614006
+- Kelas   : PBP D
 
-Deklarasi AI: Saya menggunakan Gemini untuk membantu menyesuaikan struktur HTML semantik, meminta solusi bug tata letak gambar, dan memberikan umpan balik tata bahasa untuk deskripsi bio dan poin-poin pengalaman.
+### Cara menjalankan
+ 
+```bash
+git clone <url-repositori>
+cd myportofolio
+python -m venv env
+env\Scripts\activate            # Windows. macOS/Linux: source env/bin/activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py runserver
+```
 
 ### Tugas 1
+Deklarasi AI: Saya menggunakan Gemini untuk membantu menyesuaikan struktur HTML semantik, meminta solusi bug tata letak gambar, dan memberikan umpan balik tata bahasa untuk deskripsi bio dan poin-poin pengalaman.
+
 1. Ya, saya menggunakan elemen semantik HTML5 seperti header, main, section, nav, dan footer dalam membuat dokumen HTML. Hal tersebut membuat hirarki kode HTML menjadi rapi, bersih, dan mudah dikelola dibanding hanya menggunakan pembungkus div generik bertingkat. Selain itu, pengguna berkebutuhan khusus dapat dengan mudah menavigasi bagian utama portofolio. Namun, saya belum menggunakan aside dan article dalam dokumen HTML saya.
 
 2. Salah satu tantangannya adalah ketika menyesuaikan pada bagian experience karena harus menjaga gambar dan deskripsi teks tetap sejajar dan tidak tumpang-tindih, sambil memastikan header (judul dan rentang tanggal) tetap membentang penuh dengan tanggal yang di bagian kanan atas.
@@ -39,3 +52,16 @@ Seluruh kode yang dihasilkan telah saya pahami, uji jalankan sendiri, dan disesu
 
 3. Ketika view seperti get_skill_json dipanggil, alurnya dimulai dari query ke database menggunakan Skill.objects.all() yang menghasilkan QuerySet berisi object-object Python. Karena HTTP hanya dapat mengirim data dalam bentuk teks atau bytes, object model Django tersebut perlu diubah dulu melalui proses serialization menggunakan serializers.serialize("json", skills) menjadi string berformat JSON, sebelum dibungkus ke dalam HttpResponse dan dikirim ke client. 
 Proses serialization ini penting karena object Python tidak bisa langsung dikirim melalui jaringan sehingga perlu diubah dulu ke format JSON yang berupa teks agar bisa dikirim lewat HTTP dan dibaca oleh sistem apa pun, baik itu JavaScript, aplikasi mobile, maupun bahasa pemrograman lain.
+
+### Tugas 4
+Deklarasi AI: 
+Dalam pengerjaan tugas ini, saya menggunakan Claude (Anthropic) untuk membantu menelusuri error yang saya temui, mengadaptasi skrip Selenium dari tutorial, dan mengecek kesesuaian pengerjaan kode saya dengan tutorial.
+
+Strategi prompting. Saya memberi konteks terlebih dahulu, kemudian mengecek hasil adaptasi dari contoh tutorial ke model saya sendiri. Pekerjaan dipecah per fitur kecil (autentikasi, cookie, otorisasi, star), dan setiap langkah saya jalankan sebelum lanjut. Saat ada masalah, saya menempelkan kode, traceback, atau tangkapan layar yang relevan agar AI bekerja dari kondisi berkas saya yang sebenarnya, bukan dari asumsi.
+
+Fitur di luar instruksi minimum
+ 
+- Star diterapkan ke dua model.
+- Badge peran (Owner / Editor / User) di navbar, disediakan lewat context processor.
+- Halaman 403 kustom (`templates/403.html`) yang menampilkan peran pengguna saat ini.
+- Skrip Selenium end-to-end (`test_e2e.py`).
