@@ -736,6 +736,65 @@ button:focus-visible {
     font-size: 0.8rem;
 }
 
+/* ===== Role badge di navbar ===== */
+.nav-user {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--ink);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.role-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    color: #fff;
+}
+
+.role-owner {
+    background: var(--accent);
+}
+
+.role-editor {
+    background: var(--ink);
+}
+
+.role-user {
+    background: var(--text-muted);
+}
+
+/* ===== Halaman error (403) ===== */
+.error-page {
+    padding: 5rem 0;
+    text-align: center;
+}
+
+.error-code {
+    font-family: "Space Grotesk", -apple-system, sans-serif;
+    font-size: clamp(4rem, 12vw, 7rem);
+    font-weight: 700;
+    line-height: 1;
+    color: var(--accent);
+}
+
+.error-page p:not(.error-code) {
+    color: var(--text-muted);
+    max-width: 480px;
+    margin: 0.75rem auto 1.5rem;
+}
+
+.error-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
 @media (max-width: 600px) {
     .page-header {
         align-items: flex-start;
