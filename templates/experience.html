@@ -15,10 +15,12 @@
                         <h1>Experience</h1>
                     </div>
                     {% if user.is_superuser %}
-                        <a href="{% url 'main:create_experience' %}" class="button add-button">
+                        <button type="button"
+                                class="button experience-add-button"
+                                popovertarget="add-experience-modal">
                             <span aria-hidden="true">+</span>
                             Tambah Experience
-                        </a>
+                        </button>
                     {% endif %}
                 </div>
 
@@ -57,7 +59,9 @@
             </div>
         </section>
     </main>
-
+{% if user.is_superuser %}
+    {% include "components/experience_form_modal.html" %}
+{% endif %}
 <script>
 // Konfigurasi Endpoint & Autentikasi
 const BASE_EXPERIENCES_ENDPOINT = "{% url 'main:get_experience_json' %}";
@@ -76,6 +80,9 @@ const sortSelect = document.getElementById('sort-select');
 const SEARCH_DEBOUNCE_DELAY = 300;
 let searchDebounceTimer;
 
+function closeExperienceModal() {
+    document.getElementById("add-experience-modal").hidePopover();
+}
 // Helper untuk format tanggal dari "YYYY-MM-DD" menjadi teks (misal: "Januari 2024")
 function formatDate(dateString) {
     if (!dateString) return '';
