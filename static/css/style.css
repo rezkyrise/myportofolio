@@ -843,7 +843,9 @@ button:focus-visible {
 .toast-success { border-left: 4px solid #22c55e; }
 .toast-error { border-left: 4px solid #b42318; }
 .toast-normal { border-left: 4px solid var(--accent); }
-
+.hide {
+    display: none !important;
+}
 @media (max-width: 600px) {
     .page-header {
         align-items: flex-start;

@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.core import serializers
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from main.models import Experience, Skill
 from main.forms import SkillForm, ExperienceForm
@@ -67,20 +67,10 @@ def show_main(request):
 
 
 def show_experience(request):
-    json_response = get_experience_json(request)
-    experiences = serializers.deserialize("json", json_response.content.decode("utf-8"))
-    experiences = [e.object for e in experiences]
-
-    for experience in experiences:
-        experience.bullet_points = [
-            line.strip() for line in experience.description.split("\n") if line.strip()
-        ]
-
     title_query = request.GET.get("title", "").strip()
 
     context = {
         "name": "M. Rezky Syahputra",
-        "experience_list": experiences,
         "title_query": title_query,
         "sort": request.GET.get("sort", "title_asc"),
         "is_editor": is_editor(request.user),
@@ -108,19 +98,8 @@ def update_skill(request, skill_id):
 
 
 def show_skill(request):
-    json_response = get_skill_json(request)
-    skills = serializers.deserialize("json", json_response.content.decode("utf-8"))
-    skills = [s.object for s in skills]
-
-    for skill in skills:
-        skill.icon_url = (
-            f"https://cdn.jsdelivr.net/gh/devicons/devicon/icons/{skill.icon_slug}.svg"
-            if skill.icon_slug else None
-        )
-
     context = {
         "name": "M. Rezky Syahputra",
-        "skill_list": skills,
         "name_query": request.GET.get("name", "").strip(),
         "sort": request.GET.get("sort", "asc"),
         "is_editor": is_editor(request.user),
@@ -149,7 +128,7 @@ def create_skill(request):
 def get_skill_json(request):
     name_query = request.GET.get("name", "").strip()
     sort = request.GET.get("sort", "asc")
-    skills = Skill.objects.all()
+    skills = Skill.objects.prefetch_related('starred_by').all()
 
     if name_query:
         skills = skills.filter(name__icontains=name_query)
@@ -157,8 +136,27 @@ def get_skill_json(request):
     order_field = "name" if sort == "asc" else "-name"
     skills = skills.order_by(order_field)
 
-    skills_json = serializers.serialize("json", skills, use_natural_foreign_keys=True)
-    return HttpResponse(skills_json, content_type="application/json")
+    data = []
+    for skill in skills:
+        starred_users = skill.starred_by.all()
+        is_starred = request.user in starred_users if request.user.is_authenticated else False
+        starred_by_names = ", ".join([u.username for u in starred_users])
+        data.append({
+            "pk": str(skill.id),
+            "fields": {
+                "name": skill.name,
+                "icon_slug": skill.icon_slug,
+                "category": skill.category,
+                "category_display": skill.get_category_display(),  # Menghasilkan label seperti 'Programming Language'
+                "proficiency": skill.proficiency,
+                "proficiency_display": skill.get_proficiency_display(),  # Menghasilkan label seperti 'Intermediate'
+                "star_count": starred_users.count(),
+                "is_starred": is_starred,
+                "starred_by_names": starred_by_names,
+            }
+        })
+
+    return JsonResponse(data, safe=False)
 
 
 @login_required(login_url="/login/")
@@ -228,11 +226,15 @@ def delete_experience(request, experience_id):
 def get_experience_json(request):
     title_query = request.GET.get("title", "").strip()
     sort = request.GET.get("sort", "title_asc")
-    experiences = Experience.objects.all()
+    
+    # Gunakan prefetch_related agar query relasi starred_by lebih efisien
+    experiences = Experience.objects.prefetch_related('starred_by').all()
 
+    # Filter berdasarkan judul jika ada query
     if title_query:
         experiences = experiences.filter(title__icontains=title_query)
 
+    # Pemetaan opsi sorting
     sort_map = {
         "title_asc": "title",
         "title_desc": "-title",
@@ -240,10 +242,35 @@ def get_experience_json(request):
         "date_desc": "-started_at",
     }
 
-    experiences = experiences.order_by(sort_map.get(sort, "title"))
+    order_field = sort_map.get(sort, "title")
+    experiences = experiences.order_by(order_field)
 
-    experiences_json = serializers.serialize("json", experiences, use_natural_foreign_keys=True)
-    return HttpResponse(experiences_json, content_type="application/json")
+    data = []
+    for exp in experiences:
+        starred_users = exp.starred_by.all()
+        is_starred = request.user in starred_users if request.user.is_authenticated else False
+        starred_by_names = ", ".join([u.username for u in starred_users])
+
+        data.append({
+            "pk": str(exp.id),
+            "fields": {
+                "title": exp.title,
+                "organization": exp.organization,
+                "description": exp.description,
+                "category": exp.category,
+                "category_display": exp.get_category_display(),  # Label 'human-readable' dari choices
+                "thumbnail": exp.thumbnail,
+                "started_at": exp.started_at.isoformat() if exp.started_at else None,
+                "ended_at": exp.ended_at.isoformat() if exp.ended_at else None,
+                "is_ongoing": exp.is_ongoing,  # Memanfaatkan @property is_ongoing
+                "image_url": exp.image.url if exp.image else None,  # URL file image jika diunggah
+                "star_count": starred_users.count(),
+                "is_starred": is_starred,
+                "starred_by_names": starred_by_names,
+            }
+        })
+
+    return JsonResponse(data, safe=False)
 
 @login_required(login_url="/login/")
 def toggle_star_skill(request, skill_id):

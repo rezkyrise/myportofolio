@@ -22,7 +22,7 @@
                     {% endif %}
                 </div>
 
-                <form method="get" action="{% url 'main:show_experience' %}" class="search-bar">
+                <form id="experience-search-form" class="search-bar">
                     <input type="search"
                            name="title"
                            value="{{ title_query }}"
@@ -38,63 +38,197 @@
                     <button type="submit" class="button">Cari</button>
                 </form>
 
-                <div class="experience-list">
-                    {% for experience in experience_list %}
-                        <article class="experience-card-wide {% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}">
-                            {% if experience.image %}
-                                <div class="experience-image-wrapper">
-                                    <img src="{{ experience.image.url }}" alt="{{ experience.title }}" class="experience-image">
-                                </div>
-                            {% elif experience.thumbnail %}
-                                <div class="experience-image-wrapper">
-                                    <img src="{{ experience.thumbnail }}" alt="{{ experience.title }}" class="experience-image">
-                                </div>
-                            {% endif %}
-
-                            <div class="experience-content">
-                                <h2>{{ experience.title }}</h2>
-                                {% if experience.organization %}
-                                    <p class="exp-org">{{ experience.organization }}</p>
-                                {% endif %}
-                                <p class="experience-period">
-                                    {{ experience.started_at|date:"F Y" }} &ndash;
-                                    {% if experience.ended_at %}{{ experience.ended_at|date:"F Y" }}{% else %}Sekarang{% endif %}
-                                </p>
-                                <span class="experience-category">
-                                    {{ experience.get_category_display }}
-                                </span>
-                                <ul class="exp-bullets">
-                                    {% for point in experience.bullet_points %}
-                                        <li>{{ point }}</li>
-                                    {% endfor %}
-                                </ul>
-                                {% if experience.is_ongoing %}
-                                    <p class="experience-status">Ongoing</p>
-                                {% else %}
-                                    <p class="experience-status">Completed</p>
-                                {% endif %}
-                                    <div class="card-actions">
-                                        {% include "components/experience_star.html" with experience=experience %}
-                                        {% if user.is_superuser or is_editor %}
-                                            <a href="{% url 'main:update_experience' experience.id %}" class="button button-small">Edit</a>
-                                        {% endif %}
-                                        {% if user.is_superuser %}
-                                            {% include "components/experience_delete_modal.html" with experience=experience %}
-                                        {% endif %}
-                                    </div>
-                            </div>
-                        </article>
-                    {% empty %}
-                        <p class="empty-state">
-                            {% if title_query %}
-                                Tidak ada experience dengan judul tersebut.
-                            {% else %}
-                                Belum ada pengalaman yang ditambahkan.
-                            {% endif %}
-                        </p>
-                    {% endfor %}
+                <!-- State Status AJAX -->
+                <div id="loading" class="empty-state hide">
+                    <p>Memuat pengalaman...</p>
                 </div>
+
+                <div id="error" class="empty-state hide">
+                    <p>Gagal memuat data pengalaman. Silakan coba lagi.</p>
+                </div>
+
+                <div id="empty" class="empty-state hide">
+                    <p>Belum ada pengalaman yang ditambahkan atau ditemukan.</p>
+                </div>
+
+                <!-- Wadah List Pengalaman -->
+                <div id="experience-list" class="experience-list hide"></div>
             </div>
         </section>
     </main>
+
+<script>
+// Konfigurasi Endpoint & Autentikasi
+const BASE_EXPERIENCES_ENDPOINT = "{% url 'main:get_experience_json' %}";
+const IS_SUPERUSER = "{{ user.is_superuser|yesno:'true,false' }}" === "true";
+const IS_EDITOR = "{{ is_editor|yesno:'true,false' }}" === "true";
+let experiencesAbortController;
+
+// Elemen DOM
+const loadingState = document.getElementById('loading');
+const errorState = document.getElementById('error');
+const emptyState = document.getElementById('empty');
+const listContainer = document.getElementById('experience-list'); // Gunakan id container list
+const searchForm = document.getElementById('experience-search-form');
+const searchInput = document.getElementById('search-input');
+const sortSelect = document.getElementById('sort-select');
+
+// Helper untuk format tanggal dari "YYYY-MM-DD" menjadi teks (misal: "Januari 2024")
+function formatDate(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+}
+
+// Menyembunyikan / Menampilkan State Halaman
+function displayPageSection({ showLoading = false, showError = false, showEmpty = false, showList = false }) {
+    loadingState.classList.toggle('hide', !showLoading);
+    errorState.classList.toggle('hide', !showError);
+    emptyState.classList.toggle('hide', !showEmpty);
+    listContainer.classList.toggle('hide', !showList);
+}
+
+// Membuat elemen card Experience
+function buildExperienceCardElement(item, index) {
+    const exp = item.fields;
+    const expId = item.pk;
+
+    const articleElement = document.createElement('article');
+    // Menerapkan class selang-seling even/odd sesuai urutan
+    const isEven = (index + 1) % 2 === 0;
+    articleElement.className = `experience-card-wide ${isEven ? 'even' : 'odd'}`;
+
+    // Handling Media (Image vs Thumbnail)
+    let imageHtml = '';
+    if (exp.image_url) {
+        imageHtml = `<div class="experience-image-wrapper"><img src="${exp.image_url}" alt="${exp.title}" class="experience-image"></div>`;
+    } else if (exp.thumbnail) {
+        imageHtml = `<div class="experience-image-wrapper"><img src="${exp.thumbnail}" alt="${exp.title}" class="experience-image"></div>`;
+    }
+
+    // Parsing Description menjadi Bullet Points
+    const bulletPoints = exp.description
+        ? exp.description.split('\n').filter(line => line.trim() !== '')
+        : [];
+    const bulletsHtml = bulletPoints.map(point => `<li>${point}</li>`).join('');
+
+    // Format Tanggal Periode
+    const startDateFormatted = formatDate(exp.started_at);
+    const endDateFormatted = exp.ended_at ? formatDate(exp.ended_at) : 'Sekarang';
+
+    // Generasi Dynamic URL Action (UUID pengganti)
+    const updateUrl = "{% url 'main:update_experience' '00000000-0000-0000-0000-000000000000' %}"
+        .replace('00000000-0000-0000-0000-000000000000', expId);
+    const deleteUrl = "{% url 'main:delete_experience' '00000000-0000-0000-0000-000000000000' %}"
+        .replace('00000000-0000-0000-0000-000000000000', expId);
+    const starUrl = "{% url 'main:toggle_star_experience' '00000000-0000-0000-0000-000000000000' %}"
+        .replace('00000000-0000-0000-0000-000000000000', expId);
+
+    // Tombol Edit & Hapus berdasarkan Hak Akses
+    const editHtml = (IS_SUPERUSER || IS_EDITOR)
+        ? `<a href="${updateUrl}" class="button button-small">Edit</a>`
+        : '';
+
+    const deleteHtml = IS_SUPERUSER
+        ? `<form method="post" action="${deleteUrl}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="button button-danger button-small" onclick="return confirm('Yakin ingin menghapus experience ini?');">Hapus</button>
+        </form>`
+        : '';
+
+    // Star Properties
+    const isStarredClass = exp.is_starred ? " is-starred" : "";
+    const starText = exp.is_starred ? "Unstar" : "Star";
+    const starTitle = exp.star_count > 0 
+        ? `Dibintangi oleh ${exp.starred_by_names}` 
+        : "Jadilah yang pertama memberi star";
+
+    const completeCardHtml = `
+        ${imageHtml}
+        <div class="experience-content">
+            <h2>${exp.title}</h2>
+            ${exp.organization ? `<p class="exp-org">${exp.organization}</p>` : ''}
+            <p class="experience-period">${startDateFormatted} &ndash; ${endDateFormatted}</p>
+            <span class="experience-category">${exp.category_display}</span>
+            <ul class="exp-bullets">${bulletsHtml}</ul>
+            <p class="experience-status">${exp.is_ongoing ? 'Ongoing' : 'Completed'}</p>
+
+            <div class="card-actions">
+                <form method="post" action="${starUrl}" class="star-form" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" 
+                            class="button button-star${isStarredClass}"
+                            title="${starTitle}">
+                        <span aria-hidden="true">★</span>
+                        ${starText}
+                        <span class="star-count">${exp.star_count}</span>
+                    </button>
+                </form>
+
+                ${editHtml}
+                ${deleteHtml}
+            </div>
+        </div>
+    `;
+
+    articleElement.innerHTML = completeCardHtml;
+    return articleElement;
+}
+
+// Fetch Data Experience via AJAX
+async function fetchExperiences() {
+    if (experiencesAbortController) experiencesAbortController.abort();
+    experiencesAbortController = new AbortController();
+
+    try {
+        displayPageSection({ showLoading: true });
+
+        const titleQuery = searchInput ? searchInput.value.trim() : "";
+        const sortValue = sortSelect ? sortSelect.value : "title_asc";
+
+        // Query string URL
+        const url = `${BASE_EXPERIENCES_ENDPOINT}?title=${encodeURIComponent(titleQuery)}&sort=${encodeURIComponent(sortValue)}`;
+
+        const response = await fetch(url, {
+            headers: { 'Accept': 'application/json' },
+            signal: experiencesAbortController.signal,
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch experience data');
+
+        const experienceData = await response.json();
+
+        if (experienceData.length === 0) {
+            displayPageSection({ showEmpty: true });
+        } else {
+            listContainer.innerHTML = '';
+            experienceData.forEach((item, index) => {
+                listContainer.appendChild(buildExperienceCardElement(item, index));
+            });
+            displayPageSection({ showList: true });
+        }
+    } catch (error) {
+        if (error.name === 'AbortError') return;
+        console.error('Error loading experiences:', error);
+        displayPageSection({ showError: true });
+    }
+}
+
+// Event Handlers
+if (searchForm) {
+    searchForm.addEventListener('submit', function(e) {
+        e.preventDefault(); // Cegah reload halaman
+        fetchExperiences();
+    });
+}
+
+if (sortSelect) {
+    sortSelect.addEventListener('change', function() {
+        fetchExperiences();
+    });
+}
+
+// Inisialisasi awal saat halaman dibuka
+document.addEventListener('DOMContentLoaded', fetchExperiences);
+</script>
 {% endblock content %}
