@@ -24,12 +24,13 @@
 
                 <form id="experience-search-form" class="search-bar">
                     <input type="search"
+                            id="search-input"
                            name="title"
                            value="{{ title_query }}"
                            placeholder="Cari berdasarkan judul"
                            class="search-bar__input"
                            aria-label="Cari berdasarkan judul">
-                    <select name="sort" aria-label="Urutkan" onchange="this.form.submit()">
+                    <select id="sort-select" name="sort" aria-label="Urutkan">
                         <option value="title_asc" {% if sort == "title_asc" %}selected{% endif %}>Judul A-Z</option>
                         <option value="title_desc" {% if sort == "title_desc" %}selected{% endif %}>Judul Z-A</option>
                         <option value="date_asc" {% if sort == "date_asc" %}selected{% endif %}>Tanggal Terlama</option>
@@ -72,6 +73,8 @@ const listContainer = document.getElementById('experience-list'); // Gunakan id 
 const searchForm = document.getElementById('experience-search-form');
 const searchInput = document.getElementById('search-input');
 const sortSelect = document.getElementById('sort-select');
+const SEARCH_DEBOUNCE_DELAY = 300;
+let searchDebounceTimer;
 
 // Helper untuk format tanggal dari "YYYY-MM-DD" menjadi teks (misal: "Januari 2024")
 function formatDate(dateString) {
@@ -215,12 +218,23 @@ async function fetchExperiences() {
 }
 
 // Event Handlers
-if (searchForm) {
-    searchForm.addEventListener('submit', function(e) {
-        e.preventDefault(); // Cegah reload halaman
-        fetchExperiences();
-    });
+function searchExperiences() {
+    fetchExperiences(searchInput.value.trim());
 }
+
+searchInput.addEventListener("input", function() {
+    clearTimeout(searchDebounceTimer);
+
+    searchDebounceTimer = setTimeout(function() {
+        searchExperiences();
+    }, SEARCH_DEBOUNCE_DELAY);
+});
+
+searchForm.addEventListener("submit", function(event) {
+    event.preventDefault();
+    clearTimeout(searchDebounceTimer);
+    searchExperiences();
+});
 
 if (sortSelect) {
     sortSelect.addEventListener('change', function() {
