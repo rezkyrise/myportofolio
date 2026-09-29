@@ -20,7 +20,7 @@
         <h2 id="add-experience-modal-title">Tambah Experience Baru</h2>
         <form id="experience-form"
               method="post"
-              action="{% url 'main:create_experience' %}"
+              action="{% url 'main:create_experience_ajax' %}"
               class="experience-form">
             {% csrf_token %}
             {% for field in form %}

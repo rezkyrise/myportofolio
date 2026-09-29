@@ -6,6 +6,7 @@ from main.views import (
     show_skill, create_skill, update_skill, delete_skill, get_skill_json,
     register, login_user, logout_user,
     toggle_star_skill, toggle_star_experience,
+    create_experience_ajax
 )
 
 
@@ -28,4 +29,5 @@ urlpatterns = [
     path("api/skill/", get_skill_json, name="get_skill_json"),
     path("skill/<uuid:skill_id>/star/", toggle_star_skill, name="toggle_star_skill"),
     path("experience/<uuid:experience_id>/star/", toggle_star_experience, name="toggle_star_experience"),
+    path("experience/add-ajax/", create_experience_ajax, name="create_experience_ajax"),
 ]

@@ -9,6 +9,7 @@ from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 import datetime
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.views.decorators.http import require_POST
 
 def register(request):
     form = UserCreationForm(request.POST or None)
@@ -71,7 +72,8 @@ def show_experience(request):
 
     context = {
         "name": "M. Rezky Syahputra",
-        "title_query": title_query,
+        'form': ExperienceForm(),
+        'title_query': request.GET.get('title', '').strip(),
         "sort": request.GET.get("sort", "title_asc"),
         "is_editor": is_editor(request.user),
     }
@@ -296,3 +298,21 @@ def toggle_star_experience(request, experience_id):
             experience.starred_by.add(request.user)
 
     return redirect("main:show_experience")
+
+@require_POST
+def create_experience_ajax(request):
+    if not request.user.is_superuser:
+        return JsonResponse(
+            {"message": "Hanya pemilik portofolio yang dapat menambahkan experience."},
+            status=403,
+        )
+
+    form = ExperienceForm(request.POST)
+    if form.is_valid():
+        experience = form.save()
+        return JsonResponse(
+            {"message": "Experience berhasil ditambahkan.", "pk": str(experience.id)},
+            status=201,
+        )
+
+    return JsonResponse({"errors": form.errors.get_json_data()}, status=400)
