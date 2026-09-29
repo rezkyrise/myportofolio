@@ -2,7 +2,8 @@ from django import forms
 from django.forms import ModelForm, TextInput, Textarea, Select, URLInput, ClearableFileInput, DateInput
 
 from main.models import Skill, Experience
-
+from django.core.exceptions import ValidationError
+from django.utils.html import strip_tags
 
 class SkillForm(ModelForm):
     class Meta:
@@ -60,3 +61,15 @@ class ExperienceForm(ModelForm):
             "thumbnail": URLInput(attrs={"placeholder": "https://..."}),
             "image": ClearableFileInput(),
         }
+
+    def clean_title(self):
+        title = strip_tags(self.cleaned_data["title"]).strip()
+        if not title:
+            raise ValidationError("Nama experience tidak boleh hanya berisi tag HTML.")
+        return title
+
+    def clean_tech_stack(self):
+        return strip_tags(self.cleaned_data["tech_stack"]).strip()
+
+    def clean_description(self):
+        return strip_tags(self.cleaned_data["description"]).strip()

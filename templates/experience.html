@@ -98,6 +98,15 @@ function displayPageSection({ showLoading = false, showError = false, showEmpty 
     listContainer.classList.toggle('hide', !showList);
 }
 
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+}
+    
 // Membuat elemen card Experience
 function buildExperienceCardElement(item, index) {
     const exp = item.fields;
@@ -110,17 +119,16 @@ function buildExperienceCardElement(item, index) {
 
     // Handling Media (Image vs Thumbnail)
     let imageHtml = '';
-    if (exp.image_url) {
-        imageHtml = `<div class="experience-image-wrapper"><img src="${exp.image_url}" alt="${exp.title}" class="experience-image"></div>`;
-    } else if (exp.thumbnail) {
-        imageHtml = `<div class="experience-image-wrapper"><img src="${exp.thumbnail}" alt="${exp.title}" class="experience-image"></div>`;
+    const imageUrl = exp.image_url || exp.thumbnail;
+    if (imageUrl) {
+        imageHtml = `<div class="experience-image-wrapper"><img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(exp.title)}" class="experience-image"></div>`;
     }
 
     // Parsing Description menjadi Bullet Points
     const bulletPoints = exp.description
         ? exp.description.split('\n').filter(line => line.trim() !== '')
         : [];
-    const bulletsHtml = bulletPoints.map(point => `<li>${point}</li>`).join('');
+    const bulletsHtml = bulletPoints.map(point => `<li>${escapeHtml(point)}</li>`).join('');
 
     // Format Tanggal Periode
     const startDateFormatted = formatDate(exp.started_at);
@@ -150,16 +158,16 @@ function buildExperienceCardElement(item, index) {
     const isStarredClass = exp.is_starred ? " is-starred" : "";
     const starText = exp.is_starred ? "Unstar" : "Star";
     const starTitle = exp.star_count > 0 
-        ? `Dibintangi oleh ${exp.starred_by_names}` 
+        ? `Dibintangi oleh ${escapeHtml(exp.starred_by_names)}` 
         : "Jadilah yang pertama memberi star";
 
     const completeCardHtml = `
         ${imageHtml}
         <div class="experience-content">
-            <h2>${exp.title}</h2>
-            ${exp.organization ? `<p class="exp-org">${exp.organization}</p>` : ''}
-            <p class="experience-period">${startDateFormatted} &ndash; ${endDateFormatted}</p>
-            <span class="experience-category">${exp.category_display}</span>
+            <h2>${escapeHtml(exp.title)}</h2>
+            ${exp.organization ? `<p class="exp-org">${escapeHtml(exp.organization)}</p>` : ''}
+            <p class="experience-period">${escapeHtml(startDateFormatted)} &ndash; ${escapeHtml(endDateFormatted)}</p>
+            <span class="experience-category">${escapeHtml(exp.category_display || '')}</span>
             <ul class="exp-bullets">${bulletsHtml}</ul>
             <p class="experience-status">${exp.is_ongoing ? 'Ongoing' : 'Completed'}</p>
 
