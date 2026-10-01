@@ -104,6 +104,7 @@ def show_skill(request):
         "name_query": request.GET.get("name", "").strip(),
         "sort": request.GET.get("sort", "asc"),
         "is_editor": is_editor(request.user),
+        "form": SkillForm(),
     }
     return render(request, "skill.html", context)
 
@@ -311,6 +312,24 @@ def create_experience_ajax(request):
         experience = form.save()
         return JsonResponse(
             {"message": "Experience berhasil ditambahkan.", "pk": str(experience.id)},
+            status=201,
+        )
+
+    return JsonResponse({"errors": form.errors.get_json_data()}, status=400)
+
+@require_POST
+def create_skill_ajax(request):
+    if not request.user.is_superuser:
+        return JsonResponse(
+            {"message": "Hanya pemilik portofolio yang dapat menambahkan skill."},
+            status=403,
+        )
+
+    form = SkillForm(request.POST)
+    if form.is_valid():
+        skill = form.save()
+        return JsonResponse(
+            {"message": "Skill berhasil ditambahkan.", "pk": str(skill.id)},
             status=201,
         )
 
