@@ -7,16 +7,13 @@
         <section class="experience-section" id="experience">
             <div class="container">
                 <div class="page-header">
-                    <button class="button button-secondary" onclick="showToast('Notifikasi Sistem', 'Project berhasil dimuat dengan baik!', 'success')">
-                        Test Toast Notifikasi
-                    </button>
                     <div>
                         <p class="section-kicker">My Journey as CSUI so Far</p>
                         <h1>Experience</h1>
                     </div>
                     {% if user.is_superuser %}
                         <button type="button"
-                                class="button experience-add-button"
+                                class="button add-button"
                                 popovertarget="add-experience-modal">
                             <span aria-hidden="true">+</span>
                             Tambah Experience
@@ -87,7 +84,7 @@ function closeExperienceModal() {
 function formatDate(dateString) {
     if (!dateString) return '';
     const date = new Date(dateString);
-    return date.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+    return date.toLocaleDateString('id-ID', { month: 'long', year: 'numeric', timeZone: 'UTC' });
 }
 
 // Menyembunyikan / Menampilkan State Halaman
@@ -206,7 +203,7 @@ function buildExperienceCardElement(item, index) {
                 experienceForm.reset();
                 closeExperienceModal();
                 showToast('Berhasil', 'Experience baru berhasil ditambahkan!', 'success');
-                fetchExperiences(searchInput.value.trim());
+                fetchExperiences();
             } else {
                 const errorMessages = result.errors
                     ? Object.values(result.errors).flat().map(error => error.message)
@@ -264,23 +261,15 @@ async function fetchExperiences() {
     }
 }
 
-// Event Handlers
-function searchExperiences() {
-    fetchExperiences(searchInput.value.trim());
-}
-
 searchInput.addEventListener("input", function() {
     clearTimeout(searchDebounceTimer);
-
-    searchDebounceTimer = setTimeout(function() {
-        searchExperiences();
-    }, SEARCH_DEBOUNCE_DELAY);
+    searchDebounceTimer = setTimeout(fetchExperiences, SEARCH_DEBOUNCE_DELAY);
 });
 
 searchForm.addEventListener("submit", function(event) {
     event.preventDefault();
     clearTimeout(searchDebounceTimer);
-    searchExperiences();
+    fetchExperiences();
 });
 
 if (sortSelect) {
