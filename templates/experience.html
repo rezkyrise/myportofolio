@@ -97,15 +97,6 @@ function displayPageSection({ showLoading = false, showError = false, showEmpty 
     emptyState.classList.toggle('hide', !showEmpty);
     listContainer.classList.toggle('hide', !showList);
 }
-
-function escapeHtml(value) {
-    return String(value ?? '')
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#39;');
-}
     
 // Membuat elemen card Experience
 function buildExperienceCardElement(item, index) {
@@ -195,22 +186,6 @@ function buildExperienceCardElement(item, index) {
 
     const CREATE_EXPERIENCE_ENDPOINT = "{% url 'main:create_experience_ajax' %}";
     const experienceForm = document.getElementById('experience-form');
-
-    // Membaca nilai cookie, digunakan untuk mengambil token CSRF
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
 
     // Mengirim data form ke server
     async function addExperience(event) {
