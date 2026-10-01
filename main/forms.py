@@ -32,12 +32,12 @@ class ExperienceForm(ModelForm):
     started_at = forms.DateField(
         label="Bulan Mulai",
         input_formats=["%Y-%m"],
-        widget=DateInput(attrs={"type": "month"}, format="%Y-%m"),
+        widget=DateInput(attrs={"type": "month", "placeholder": "YYYY-MM"}, format="%Y-%m"),
     )
     ended_at = forms.DateField(
         label="Bulan Selesai (kosongkan jika masih berjalan)",
         input_formats=["%Y-%m"],
-        widget=DateInput(attrs={"type": "month"}, format="%Y-%m"),
+        widget=DateInput(attrs={"type": "month", "placeholder": "YYYY-MM"}, format="%Y-%m"),
         required=False,
     )
     class Meta:
@@ -68,8 +68,18 @@ class ExperienceForm(ModelForm):
             raise ValidationError("Nama experience tidak boleh hanya berisi tag HTML.")
         return title
 
-    def clean_tech_stack(self):
-        return strip_tags(self.cleaned_data["tech_stack"]).strip()
-
     def clean_description(self):
-        return strip_tags(self.cleaned_data["description"]).strip()
+        description = strip_tags(self.cleaned_data["description"]).strip()
+        if not description:
+            raise ValidationError("Deskripsi tidak boleh hanya berisi tag HTML.")
+        return description
+
+    def clean_organization(self):
+        return strip_tags(self.cleaned_data["organization"]).strip()
+
+    def clean(self):
+        cleaned = super().clean()
+        start, end = cleaned.get("started_at"), cleaned.get("ended_at")
+        if start and end and end < start:
+            self.add_error("ended_at", "Bulan selesai tidak boleh lebih awal dari bulan mulai.")
+        return cleaned
