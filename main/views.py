@@ -1,6 +1,5 @@
 from django.contrib import messages
-from django.core import serializers
-from django.http import HttpResponse, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from main.models import Experience, Skill
 from main.forms import SkillForm, ExperienceForm
@@ -73,7 +72,7 @@ def show_experience(request):
     context = {
         "name": "M. Rezky Syahputra",
         'form': ExperienceForm(),
-        'title_query': request.GET.get('title', '').strip(),
+        "title_query": title_query,
         "sort": request.GET.get("sort", "title_asc"),
         "is_editor": is_editor(request.user),
     }
@@ -307,7 +306,7 @@ def create_experience_ajax(request):
             status=403,
         )
 
-    form = ExperienceForm(request.POST)
+    form = ExperienceForm(request.POST, request.FILES)
     if form.is_valid():
         experience = form.save()
         return JsonResponse(
