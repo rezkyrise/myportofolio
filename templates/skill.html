@@ -9,21 +9,23 @@
                 <div class="page-header">
                     <h2 class="section-title">Skills</h2>
                     {% if user.is_superuser %}
-                        <a href="{% url 'main:create_skill' %}" class="button add-button">
+                        <button type="button" class="button add-button" popovertarget="add-skill-modal">
                             <span aria-hidden="true">+</span>
                             Tambah Skill
-                        </a>
+                        </button>
                     {% endif %}
                 </div>
 
-                <form method="get" action="{% url 'main:show_skill' %}" class="search-bar">
+                <form id="skill-search-form" class="search-bar">
                     <input type="search"
+                           id="search-input"
                            name="name"
+                           autocomplete="off"
                            value="{{ name_query }}"
                            placeholder="Cari berdasarkan nama skill"
                            class="search-bar__input"
                            aria-label="Cari berdasarkan nama skill">
-                    <select name="sort" aria-label="Urutkan" onchange="this.form.submit()">
+                    <select id="sort-select" name="sort" aria-label="Urutkan">
                         <option value="asc" {% if sort == "asc" %}selected{% endif %}>Nama A-Z</option>
                         <option value="desc" {% if sort == "desc" %}selected{% endif %}>Nama Z-A</option>
                     </select>
@@ -37,57 +39,218 @@
                     <button class="filter-btn" data-filter="competency">Core Competency</button>
                 </div>
 
-                <div class="skills-grid">
-                    {% for skill in skill_list %}
-                        <div class="skill-card" data-category="{{ skill.category }}">
-                            {% if skill.icon_url %}
-                                <img src="{{ skill.icon_url }}" alt="{{ skill.name }}" class="skill-logo">
-                            {% else %}
-                                <div class="skill-logo-fallback">{{ skill.name|first }}</div>
-                            {% endif %}
-                            <h3>{{ skill.name }}</h3>
-                            <p class="skill-proficiency">{{ skill.get_proficiency_display }}</p>
-                                <div class="card-actions">
-                                    {% include "components/skill_star.html" with skill=skill %}
-                                    {% if user.is_superuser or is_editor %}
-                                        <a href="{% url 'main:update_skill' skill.id %}" class="button button-small">Edit</a>
-                                    {% endif %}
-                                    {% if user.is_superuser %}
-                                        {% include "components/skill_delete_modal.html" with skill=skill %}
-                                    {% endif %}
-                                </div>
-                        </div>
-                    {% empty %}
-                        <p class="empty-state">
-                            Belum ada skill yang ditambahkan.
-                        </p>
-                    {% endfor %}
-                </div>
+                <div id="loading" class="empty-state hide"><p>Memuat skill...</p></div>
+                <div id="error" class="empty-state hide"><p>Gagal memuat data skill. Silakan coba lagi.</p></div>
+                <div id="empty" class="empty-state hide"><p>Belum ada skill yang ditambahkan atau ditemukan.</p></div>
+                <div id="skill-grid" class="skills-grid hide"></div>
             </div>
         </section>
     </main>
 
-    <script>
-        const filterButtons = document.querySelectorAll(".filter-btn");
-        const skillCards = document.querySelectorAll(".skill-card");
+{% if user.is_superuser %}
+    {% include "components/skill_form_modal.html" %}
+{% endif %}
 
-        filterButtons.forEach(function (button) {
-            button.addEventListener("click", function () {
-                filterButtons.forEach(function (btn) {
-                    btn.classList.remove("active");
-                });
-                button.classList.add("active");
+<script>
+// Konfigurasi
+const SKILLS_ENDPOINT = "{% url 'main:get_skill_json' %}";
+const CREATE_SKILL_ENDPOINT = "{% url 'main:create_skill_ajax' %}";
+const IS_SUPERUSER = "{{ user.is_superuser|yesno:'true,false' }}" === "true";
+const IS_EDITOR = "{{ is_editor|yesno:'true,false' }}" === "true";
+const DEVICON_BASE_URL = "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/";
+const DUMMY_ID = "00000000-0000-0000-0000-000000000000";
+const SEARCH_DEBOUNCE_DELAY = 300;
 
-                const filter = button.dataset.filter;
+let skillsAbortController;
+let searchDebounceTimer;
+let skillsData = [];        // hasil fetch terakhir
+let activeCategory = 'all'; // filter kategori aktif (sisi klien)
 
-                skillCards.forEach(function (card) {
-                    if (filter === "all" || card.dataset.category === filter) {
-                        card.style.display = "";
-                    } else {
-                        card.style.display = "none";
-                    }
-                });
-            });
+// Elemen DOM
+const loadingState = document.getElementById('loading');
+const errorState = document.getElementById('error');
+const emptyState = document.getElementById('empty');
+const gridContainer = document.getElementById('skill-grid');
+const searchForm = document.getElementById('skill-search-form');
+const searchInput = document.getElementById('search-input');
+const sortSelect = document.getElementById('sort-select');
+const filterButtons = document.querySelectorAll('.filter-btn');
+const skillForm = document.getElementById('skill-form'); // null jika bukan superuser
+
+function closeSkillModal() {
+    document.getElementById('add-skill-modal').hidePopover();
+}
+
+function displayPageSection({ showLoading = false, showError = false, showEmpty = false, showGrid = false }) {
+    loadingState.classList.toggle('hide', !showLoading);
+    errorState.classList.toggle('hide', !showError);
+    emptyState.classList.toggle('hide', !showEmpty);
+    gridContainer.classList.toggle('hide', !showGrid);
+}
+
+// Membuat elemen kartu skill
+function buildSkillCardElement(item) {
+    const skill = item.fields;
+    const skillId = item.pk;
+
+    const updateUrl = "{% url 'main:update_skill' '00000000-0000-0000-0000-000000000000' %}".replace(DUMMY_ID, skillId);
+    const deleteUrl = "{% url 'main:delete_skill' '00000000-0000-0000-0000-000000000000' %}".replace(DUMMY_ID, skillId);
+    const starUrl = "{% url 'main:toggle_star_skill' '00000000-0000-0000-0000-000000000000' %}".replace(DUMMY_ID, skillId);
+
+    const initial = (skill.name || '?').charAt(0).toUpperCase();
+    const fallbackHtml = `<div class="skill-logo-fallback">${escapeHtml(initial)}</div>`;
+    const iconHtml = skill.icon_slug
+        ? `<img src="${DEVICON_BASE_URL}${escapeHtml(skill.icon_slug)}.svg" alt="${escapeHtml(skill.name)}" class="skill-logo">`
+        : fallbackHtml;
+
+    const editHtml = (IS_SUPERUSER || IS_EDITOR)
+        ? `<a href="${updateUrl}" class="button button-small">Edit</a>`
+        : '';
+    const deleteHtml = IS_SUPERUSER
+        ? `<form method="post" action="${deleteUrl}" style="display:inline;">
+               {% csrf_token %}
+               <button type="submit" class="button button-danger button-small"
+                       onclick="return confirm('Yakin ingin menghapus skill ini?');">Hapus</button>
+           </form>`
+        : '';
+
+    const isStarredClass = skill.is_starred ? " is-starred" : "";
+    const starText = skill.is_starred ? "Unstar" : "Star";
+    const starTitle = skill.star_count > 0
+        ? `Dibintangi oleh ${escapeHtml(skill.starred_by_names)}`
+        : "Jadilah yang pertama memberi star";
+
+    const cardElement = document.createElement('div');
+    cardElement.className = 'skill-card';
+    cardElement.innerHTML = `
+        ${iconHtml}
+        <h3>${escapeHtml(skill.name)}</h3>
+        <p class="skill-proficiency">${escapeHtml(skill.proficiency_display)}</p>
+        <div class="card-actions">
+            <form method="post" action="${starUrl}" class="star-form">
+                {% csrf_token %}
+                <button type="submit" class="button button-star button-small${isStarredClass}" title="${starTitle}">
+                    <span aria-hidden="true">★</span>
+                    ${starText}
+                    <span class="star-count">${skill.star_count}</span>
+                </button>
+            </form>
+            ${editHtml}
+            ${deleteHtml}
+        </div>
+    `;
+
+    // Jika ikon gagal dimuat (slug salah / offline), tampilkan huruf pertama
+    const logo = cardElement.querySelector('.skill-logo');
+    if (logo) {
+        logo.addEventListener('error', () => { logo.outerHTML = fallbackHtml; }, { once: true });
+    }
+    return cardElement;
+}
+
+// Menampilkan data yang sudah diambil, sesuai filter kategori aktif
+function renderSkills() {
+    const visible = activeCategory === 'all'
+        ? skillsData
+        : skillsData.filter(item => item.fields.category === activeCategory);
+
+    if (visible.length === 0) {
+        displayPageSection({ showEmpty: true });
+        return;
+    }
+    gridContainer.innerHTML = '';
+    visible.forEach(item => gridContainer.appendChild(buildSkillCardElement(item)));
+    displayPageSection({ showGrid: true });
+}
+
+// Mengambil data skill dari server
+async function fetchSkills() {
+    if (skillsAbortController) skillsAbortController.abort();
+    skillsAbortController = new AbortController();
+
+    try {
+        displayPageSection({ showLoading: true });
+        const params = new URLSearchParams({
+            name: searchInput.value.trim(),
+            sort: sortSelect.value,
         });
-    </script>
+        const response = await fetch(`${SKILLS_ENDPOINT}?${params}`, {
+            headers: { 'Accept': 'application/json' },
+            signal: skillsAbortController.signal,
+        });
+        if (!response.ok) throw new Error('Failed to fetch skill data');
+
+        skillsData = await response.json();
+        renderSkills();
+    } catch (error) {
+        if (error.name === 'AbortError') return;
+        console.error('Error loading skills:', error);
+        displayPageSection({ showError: true });
+    }
+}
+
+// Mengirim form tambah skill
+async function addSkill(event) {
+    event.preventDefault();
+
+    const submitButton = skillForm.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
+
+    try {
+        const response = await fetch(CREATE_SKILL_ENDPOINT, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCookie('csrftoken') },
+            body: new FormData(skillForm),
+        });
+        const result = await response.json().catch(() => ({}));
+
+        if (response.ok) {
+            skillForm.reset();
+            closeSkillModal();
+            showToast('Berhasil', 'Skill baru berhasil ditambahkan!', 'success');
+            fetchSkills();
+        } else {
+            const errorMessages = result.errors
+                ? Object.values(result.errors).flat().map(error => error.message)
+                : [result.message || `Terjadi kesalahan (status ${response.status}).`];
+            showToast('Gagal menambahkan skill', errorMessages.join(' '), 'error');
+        }
+    } catch (error) {
+        console.error('Error adding skill:', error);
+        showToast('Gagal menambahkan skill', 'Tidak dapat terhubung ke server. Silakan coba lagi.', 'error');
+    } finally {
+        submitButton.disabled = false;
+    }
+}
+
+// Event handlers
+if (skillForm) {
+    skillForm.addEventListener('submit', addSkill);
+}
+
+searchInput.addEventListener('input', function () {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(fetchSkills, SEARCH_DEBOUNCE_DELAY);
+});
+
+searchForm.addEventListener('submit', function (event) {
+    event.preventDefault();
+    clearTimeout(searchDebounceTimer);
+    fetchSkills();
+});
+
+sortSelect.addEventListener('change', fetchSkills);
+
+filterButtons.forEach(function (button) {
+    button.addEventListener('click', function () {
+        filterButtons.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        activeCategory = button.dataset.filter;
+        renderSkills();
+    });
+});
+
+// Inisialisasi awal
+fetchSkills();
+</script>
 {% endblock content %}
