@@ -4,6 +4,9 @@ from django.forms import ModelForm, TextInput, Textarea, Select, URLInput, Clear
 from main.models import Skill, Experience
 from django.core.exceptions import ValidationError
 from django.utils.html import strip_tags
+import re
+
+ICON_SLUG_PATTERN = re.compile(r"^[A-Za-z0-9_-]+(/[A-Za-z0-9_-]+)*$")
 
 class SkillForm(ModelForm):
     class Meta:
@@ -27,6 +30,17 @@ class SkillForm(ModelForm):
                 attrs={"placeholder": "python/python-original — cari di devicon.dev"}
             ),
         }
+    def clean_name(self):
+        name = strip_tags(self.cleaned_data["name"]).strip()
+        if not name:
+            raise ValidationError("Nama skill tidak boleh hanya berisi tag HTML.")
+        return name
+
+    def clean_icon_slug(self):
+        slug = self.cleaned_data["icon_slug"].strip()
+        if slug and not ICON_SLUG_PATTERN.match(slug):
+            raise ValidationError("Slug ikon hanya boleh berisi huruf, angka, '-', '_', dan '/'.")
+        return slug
 
 class ExperienceForm(ModelForm):
     started_at = forms.DateField(
