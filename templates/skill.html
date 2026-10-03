@@ -127,11 +127,11 @@ function buildSkillCardElement(item) {
         <h3>${escapeHtml(skill.name)}</h3>
         <p class="skill-proficiency">${escapeHtml(skill.proficiency_display)}</p>
         <div class="card-actions">
-            <form method="post" action="${starUrl}" class="star-form">
+            <form method="post" action="${starUrl}" class="star-form" data-id="${escapeHtml(skillId)}">
                 {% csrf_token %}
                 <button type="submit" class="button button-star button-small${isStarredClass}" title="${starTitle}">
                     <span aria-hidden="true">★</span>
-                    ${starText}
+                    <span class="star-label">${starText}</span>
                     <span class="star-count">${skill.star_count}</span>
                 </button>
             </form>
@@ -222,6 +222,17 @@ async function addSkill(event) {
         submitButton.disabled = false;
     }
 }
+
+gridContainer.addEventListener('submit', async function (event) {
+    const form = event.target.closest('.star-form');
+    if (!form) return;
+    event.preventDefault();
+    const result = await toggleStar(form);
+    if (result) {
+        const item = skillsData.find(i => i.pk === form.dataset.id);
+        if (item) Object.assign(item.fields, result);
+    }
+});
 
 // Event handlers
 if (skillForm) {

@@ -274,30 +274,35 @@ def get_experience_json(request):
 
     return JsonResponse(data, safe=False)
 
-@login_required(login_url="/login/")
+def _toggle_star(request, obj):
+    """Membalik status star user pada obj, lalu membalas JSON terbaru.
+
+    Status: 200 berhasil, 401 jika belum login.
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({"message": "Silakan login untuk memberi star."}, status=401)
+
+    if request.user in obj.starred_by.all():
+        obj.starred_by.remove(request.user)
+    else:
+        obj.starred_by.add(request.user)
+
+    starred_users = obj.starred_by.all()
+    return JsonResponse({
+        "is_starred": request.user in starred_users,
+        "star_count": starred_users.count(),
+        "starred_by_names": ", ".join(u.username for u in starred_users),
+    })
+
+
+@require_POST
 def toggle_star_skill(request, skill_id):
-    skill = get_object_or_404(Skill, pk=skill_id)
-
-    if request.method == "POST":
-        if request.user in skill.starred_by.all():
-            skill.starred_by.remove(request.user)
-        else:
-            skill.starred_by.add(request.user)
-
-    return redirect("main:show_skill")
+    return _toggle_star(request, get_object_or_404(Skill, pk=skill_id))
 
 
-@login_required(login_url="/login/")
+@require_POST
 def toggle_star_experience(request, experience_id):
-    experience = get_object_or_404(Experience, pk=experience_id)
-
-    if request.method == "POST":
-        if request.user in experience.starred_by.all():
-            experience.starred_by.remove(request.user)
-        else:
-            experience.starred_by.add(request.user)
-
-    return redirect("main:show_experience")
+    return _toggle_star(request, get_object_or_404(Experience, pk=experience_id))
 
 @require_POST
 def create_experience_ajax(request):

@@ -918,6 +918,10 @@ button:focus-visible {
     margin-top: 1.5rem;
 }
 
+.skill-card .card-actions {
+    justify-content: center;
+}
+
 @media (max-width: 600px) {
     .page-header {
         align-items: flex-start;

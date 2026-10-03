@@ -163,10 +163,10 @@ function buildExperienceCardElement(item, index) {
                 <form method="post" action="${starUrl}" class="star-form" style="display:inline;">
                     {% csrf_token %}
                     <button type="submit" 
-                            class="button button-star${isStarredClass}"
+                            class="button button-star button-small${isStarredClass}"
                             title="${starTitle}">
                         <span aria-hidden="true">★</span>
-                        ${starText}
+                        <span class="star-label">${starText}</span>
                         <span class="star-count">${exp.star_count}</span>
                     </button>
                 </form>
@@ -260,6 +260,14 @@ async function fetchExperiences() {
         displayPageSection({ showError: true });
     }
 }
+
+// Event delegation: berlaku juga untuk kartu yang dibuat ulang oleh fetchExperiences
+listContainer.addEventListener('submit', function (event) {
+    const form = event.target.closest('.star-form');
+    if (!form) return;
+    event.preventDefault();
+    toggleStar(form);
+});
 
 searchInput.addEventListener("input", function() {
     clearTimeout(searchDebounceTimer);
