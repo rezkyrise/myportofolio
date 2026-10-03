@@ -65,3 +65,30 @@ Fitur di luar instruksi minimum
 - Badge peran (Owner / Editor / User) di navbar, disediakan lewat context processor.
 - Halaman 403 kustom (`templates/403.html`) yang menampilkan peran pengguna saat ini.
 - Skrip Selenium end-to-end (`test_e2e.py`).
+
+### Tugas 5
+Deklarasi AI: 
+Dalam pengerjaan tugas ini, saya menggunakan Claude (Anthropic) untuk membantu menelusuri error yang saya temui, membantu memahami pola tutorial, dan mengecek kesesuaian pengerjaan kode saya dengan tutorial.
+
+Strategi prompting. Saya memberi konteks terlebih dahulu, kemudian mengecek hasil adaptasi dari contoh tutorial ke model saya sendiri. Pekerjaan dipecah per fitur kecil (autentikasi, cookie, otorisasi, star), dan setiap langkah saya jalankan sebelum lanjut. Saat ada masalah, saya menempelkan kode, traceback, atau tangkapan layar yang relevan agar AI bekerja dari kondisi berkas saya yang sebenarnya, bukan dari asumsi.
+
+Implementasi minggu ini:
+- Daftar dimuat lewat `fetch()` dari endpoint JSON, dengan state loading, kosong, dan error
+- Pencarian dengan debouncing 300 ms
+- Modal tambah data, dikirim lewat AJAX (status 201, 400, 403) dengan CSRF
+- Notifikasi toast untuk sukses dan gagal, termasuk pesan validasi server
+- Perlindungan XSS: `escapeHtml` dan `strip_tags`
+
+Fitur ekstra:
+- Star tanpa reload halaman: tombol, jumlah, dan tooltip langsung diperbarui tanpa memuat ulang. Pencarian dan filter yang aktif tetap terjaga.
+
+1. Debouncing adalah teknik menunda eksekusi sebuah fungsi sampai ada jeda waktu tertentu tanpa event baru. Selama event masih terus terjadi, timer sebelumnya dibatalkan dan dimulai lagi dari awal, sehingga fungsi hanya berjalan sekali setelah event berhenti. 
+Pada fitur pencarian yang menggunakan AJAX, tanpa debouncing setiap ketikan memicu satu request ke server. Akibatnya beban server dan penggunaan bandwidth meningkat, dan daftar terus dirender ulang sehingga tampilan berkedip. Selain itu, respons dari request lama bisa tiba terlambat lalu menimpa hasil yang lebih baru.
+
+2. `await` digunakan di dalam `async function` untuk menunggu sebuah Promise selesai diproses sebelum eksekusi lanjut ke baris berikutnya. Fungsi `fetch()` tidak langsung mengembalikan data, melainkan sebuah Promise yang baru terisi objek `Response` setelah server membalas. Dengan `await`, eksekusi fungsi dijeda pada baris itu sampai balasan diterima, lalu hasilnya dapat dipakai seperti nilai biasa. Prosesnya sendiri tetap asinkron, jadi browser tidak membeku dan bagian halaman lain tetap bisa berjalan selama menunggu.
+Jika `await` tidak digunakan, variabel `response` hanya berisi Promise yang masih pending, bukan objek `Response`. Akibatnya `response.ok` bernilai `undefined` sehingga kode menganggap permintaan gagal, dan `response.json()` memunculkan error karena Promise tidak memiliki method tersebut. Baris-baris berikutnya juga langsung berjalan sebelum data tiba. Pada daftar Experience, misalnya, `forEach` akan dijalankan pada data yang belum ada, sehingga kartu tidak tampil atau halaman menampilkan kondisi error.
+
+3. XSS (Cross-Site Scripting) adalah serangan ketika penyerang berhasil menyisipkan kode JavaScript miliknya ke halaman web, yang kemudian dijalankan di browser pengguna lain. Salah satu jenisnya adalah stored XSS, yaitu ketika kode berbahaya disimpan di database, lalu dijalankan setiap kali data itu ditampilkan, termasuk di browser pengunjung yang tidak login. Dampaknya serius karena kode yang tersisip berjalan di dalam halaman kita sendiri. Kode itu bisa membaca cookie `csrftoken` dan mengirim request atas nama korban sehingga perlindungan CSRF tidak lagi efektif.
+Data yang ditampilkan lewat template Django relatif aman karena Django melakukan auto-escaping pada setiap `{{ variabel }}`. Karakter seperti `<` dan `>` diubah menjadi `&lt;` dan `&gt;`, sehingga browser menampilkannya sebagai teks biasa, bukan sebagai tag HTML. Pada AJAX, perlindungan itu hilang. Data JSON saya sisipkan sendiri ke dalam template literal, lalu dipasang ke halaman lewat `innerHTML`. Tidak ada lagi Django yang melakukan escaping sehingga browser menafsirkan setiap tag di dalam data sebagai HTML sungguhan. Contohnya, judul `<img src="x" onerror="alert('XSS!')">` akan menjalankan `alert` begitu gambar gagal dimuat.
+
+
