@@ -53,8 +53,8 @@
 
 <script>
 // Konfigurasi
-const SKILLS_ENDPOINT = "{% url 'main:get_skill_json' %}";
-const CREATE_SKILL_ENDPOINT = "{% url 'main:create_skill_ajax' %}";
+const SKILLS_ENDPOINT = "{% url 'api:skill-list' %}";
+const CREATE_SKILL_ENDPOINT = "{% url 'api:skill-list' %}";
 const IS_SUPERUSER = "{{ user.is_superuser|yesno:'true,false' }}" === "true";
 const IS_EDITOR = "{{ is_editor|yesno:'true,false' }}" === "true";
 const DEVICON_BASE_URL = "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/";
@@ -90,12 +90,12 @@ function displayPageSection({ showLoading = false, showError = false, showEmpty 
 
 // Membuat elemen kartu skill
 function buildSkillCardElement(item) {
-    const skill = item.fields;
-    const skillId = item.pk;
+    const skill = item;
+    const skillId = item.id;
 
     const updateUrl = "{% url 'main:update_skill' '00000000-0000-0000-0000-000000000000' %}".replace(DUMMY_ID, skillId);
-    const deleteUrl = "{% url 'main:delete_skill' '00000000-0000-0000-0000-000000000000' %}".replace(DUMMY_ID, skillId);
-    const starUrl = "{% url 'main:toggle_star_skill' '00000000-0000-0000-0000-000000000000' %}".replace(DUMMY_ID, skillId);
+    const deleteUrl = "{% url 'api:skill-detail' '00000000-0000-0000-0000-000000000000' %}".replace(DUMMY_ID, skillId);
+    const starUrl = "{% url 'api:skill-star' '00000000-0000-0000-0000-000000000000' %}".replace(DUMMY_ID, skillId);
 
     const initial = (skill.name || '?').charAt(0).toUpperCase();
     const fallbackHtml = `<div class="skill-logo-fallback">${escapeHtml(initial)}</div>`;
@@ -106,12 +106,12 @@ function buildSkillCardElement(item) {
     const editHtml = (IS_SUPERUSER || IS_EDITOR)
         ? `<a href="${updateUrl}" class="button button-small">Edit</a>`
         : '';
+
     const deleteHtml = IS_SUPERUSER
-        ? `<form method="post" action="${deleteUrl}" style="display:inline;">
-               {% csrf_token %}
-               <button type="submit" class="button button-danger button-small"
-                       onclick="return confirm('Yakin ingin menghapus skill ini?');">Hapus</button>
-           </form>`
+        ? `<button type="button"
+                class="button button-danger button-small"
+                data-action="delete"
+                data-url="${deleteUrl}">Hapus</button>`
         : '';
 
     const isStarredClass = skill.is_starred ? " is-starred" : "";
@@ -152,7 +152,7 @@ function buildSkillCardElement(item) {
 function renderSkills() {
     const visible = activeCategory === 'all'
         ? skillsData
-        : skillsData.filter(item => item.fields.category === activeCategory);
+        : skillsData.filter(item => item.category === activeCategory);
 
     if (visible.length === 0) {
         displayPageSection({ showEmpty: true });
@@ -210,9 +210,9 @@ async function addSkill(event) {
             showToast('Berhasil', 'Skill baru berhasil ditambahkan!', 'success');
             fetchSkills();
         } else {
-            const errorMessages = result.errors
-                ? Object.values(result.errors).flat().map(error => error.message)
-                : [result.message || `Terjadi kesalahan (status ${response.status}).`];
+            const errorMessages = result.detail
+                ? [result.detail]
+                : Object.values(result).flat();
             showToast('Gagal menambahkan skill', errorMessages.join(' '), 'error');
         }
     } catch (error) {
@@ -229,8 +229,38 @@ gridContainer.addEventListener('submit', async function (event) {
     event.preventDefault();
     const result = await toggleStar(form);
     if (result) {
-        const item = skillsData.find(i => i.pk === form.dataset.id);
-        if (item) Object.assign(item.fields, result);
+        const item = skillsData.find(i => i.id === form.dataset.id);
+        if (item) Object.assign(item, result);
+    }
+});
+
+gridContainer.addEventListener('click', async function (event) {
+    const button = event.target.closest('button[data-action="delete"]');
+    if (!button) return;
+
+    if (!window.confirm('Yakin ingin menghapus skill ini?')) return;
+
+    button.disabled = true;
+    try {
+        const response = await fetch(button.dataset.url, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Accept': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const result = await response.json().catch(() => ({}));
+            throw new Error(result.detail || `Gagal menghapus (status ${response.status}).`);
+        }
+
+        showToast('Berhasil', 'Skill berhasil dihapus.', 'success');
+        await fetchSkills();
+    } catch (error) {
+        showToast('Gagal menghapus skill', error.message, 'error');
+    } finally {
+        button.disabled = false;
     }
 });
 
