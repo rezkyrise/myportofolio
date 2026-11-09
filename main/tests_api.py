@@ -1,11 +1,11 @@
 import uuid
-
+import datetime
 from django.contrib.auth.models import Group, User
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
-from main.models import Skill
+from main.models import Experience, Skill
 
 
 class SkillAPITest(APITestCase):
