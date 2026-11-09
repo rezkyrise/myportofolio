@@ -91,4 +91,29 @@ Jika `await` tidak digunakan, variabel `response` hanya berisi Promise yang masi
 3. XSS (Cross-Site Scripting) adalah serangan ketika penyerang berhasil menyisipkan kode JavaScript miliknya ke halaman web, yang kemudian dijalankan di browser pengguna lain. Salah satu jenisnya adalah stored XSS, yaitu ketika kode berbahaya disimpan di database, lalu dijalankan setiap kali data itu ditampilkan, termasuk di browser pengunjung yang tidak login. Dampaknya serius karena kode yang tersisip berjalan di dalam halaman kita sendiri. Kode itu bisa membaca cookie `csrftoken` dan mengirim request atas nama korban sehingga perlindungan CSRF tidak lagi efektif.
 Data yang ditampilkan lewat template Django relatif aman karena Django melakukan auto-escaping pada setiap `{{ variabel }}`. Karakter seperti `<` dan `>` diubah menjadi `&lt;` dan `&gt;`, sehingga browser menampilkannya sebagai teks biasa, bukan sebagai tag HTML. Pada AJAX, perlindungan itu hilang. Data JSON saya sisipkan sendiri ke dalam template literal, lalu dipasang ke halaman lewat `innerHTML`. Tidak ada lagi Django yang melakukan escaping sehingga browser menafsirkan setiap tag di dalam data sebagai HTML sungguhan. Contohnya, judul `<img src="x" onerror="alert('XSS!')">` akan menjalankan `alert` begitu gambar gagal dimuat.
 
+### Tugas 6
 
+Deklarasi AI:
+Saya menggunakan OpenAI Codex untuk memahami panduan Tutorial 07 dan Individual Assignment 6 serta membantu menyesuaikan pola DRF dari Skill ke Experience. Saya menerapkan kode secara bertahap, bertanya jika ada ketidaksesuaian atau error, dan tidak mengizinkan AI langsung mengubah kode.
+
+Strategi prompting: Saya memberi konteks terlebih dahulu, kemudian mengecek hasil adaptasi dari contoh tutorial ke model saya sendiri. Pekerjaan dipecah per fitur kecil (autentikasi, cookie, otorisasi, star), dan setiap langkah saya jalankan sebelum lanjut. Saat ada masalah, saya menempelkan kode, traceback, atau tangkapan layar yang relevan agar AI bekerja dari kondisi berkas saya yang sebenarnya, bukan dari asumsi.
+
+Implementasi minggu ini:
+- API Experience memakai serializer, validasi input, permission untuk pengunjung/pengguna biasa/Editor/pemilik, serta endpoint daftar, detail, star, dan pencarian. 
+- Halaman Experience memakai API untuk menampilkan, mencari, menambah, mengedit, memberi atau membatalkan star, dan menghapus data tanpa reload. 
+- Request perubahan menyertakan CSRF token dan teks yang dimasukkan ke HTML di-escape. 
+- Test API Experience ditambahkan di main/tests_api.py.
+
+Fitur ekstra:
+- Preview gambar Experience sebelum disimpan, beserta penyesuaian ukuran tampilannya.
+- Model edit mengambang untuk Skill dan Experience
+
+1. REST adalah gaya arsitektur untuk merancang layanan web dengan batasan client-server, stateless, cacheable, layered system, dan uniform interface. Dalam API bergaya REST, resource memiliki URL yang konsisten (misalnya `/api/v1/experiences/<uuid>/`), tindakan menggunakan semantik method HTTP yang sesuai, dan respons memakai status code yang menggambarkan hasilnya. JSON hanyalah format data; API yang mengirim JSON belum tentu RESTful, misalnya pola `POST /doSomething` yang URL-nya menggambarkan tindakan seperti RPC. API proyek ini mengikuti konvensi tersebut, meskipun `SessionAuthentication` membuatnya tidak sepenuhnya stateless dalam pengertian REST yang ketat.
+
+   PUT mengganti representasi resource secara utuh dan bersifat idempoten, sedangkan PATCH digunakan untuk mengubah sebagian field. Jika client mengirim seluruh data Experience, PUT sesuai digunakan. Jika hanya judul yang berubah, misalnya dengan {"title": "Judul baru"}, PATCH memungkinkan field lain tetap tidak berubah. Pada implementasi halaman Experience saya, proses edit menggunakan PATCH.
+
+2. Serializer DRF menerjemahkan objek model menjadi data primitif yang dapat dirender ke JSON, serta memvalidasi input client sebelum data disimpan. `ModelSerializer` mengambil field dan operasi penyimpanan dari model. Daftar `fields` yang ditulis eksplisit membatasi data yang dibuka API, dan field hasil perhitungan dapat ditandai `read_only`. Dibandingkan dengan merakit dictionary dan `JsonResponse` secara manual, serializer mengurangi kode berulang, memusatkan validasi, serta menjaga format respons dan pesan error tetap konsisten.
+
+3. Autentikasi menentukan siapa yang mengirim request dan mengisi `request.user`, sedangkan otorisasi menentukan tindakan apa yang boleh dilakukan pengguna tersebut melalui permission class. Hak akses harus diperiksa di server karena tombol yang disembunyikan di template hanya mengatur tampilan. Client tetap dapat mengirim request langsung ke endpoint, misalnya melalui `curl` atau Postman. Tanpa pemeriksaan permission di server, pengguna dapat mengakses atau mengubah data yang bukan miliknya.
+
+4. `SessionAuthentication` memakai cookie session untuk mengenali pengguna. Browser mengirim cookie secara otomatis, termasuk pada request yang dipicu situs lain. Token CSRF membantu mencegah situs lain memalsukan request yang mengubah data: situs tersebut tidak dapat membaca token dari halaman aplikasi karena aturan same-origin browser. `force_authenticate` memasang pengguna langsung dan melewati proses authentication sehingga pemeriksaan CSRF oleh `SessionAuthentication` tidak dijalankan. Karena itu, test CSRF harus menggunakan `APIClient(enforce_csrf_checks=True)` dan `.login()` sungguhan, lalu memeriksa bahwa request tanpa token ditolak dengan status `403` dan request dengan token valid berhasil diproses.
