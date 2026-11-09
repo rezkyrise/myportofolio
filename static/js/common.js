@@ -26,7 +26,7 @@ async function toggleStar(form) {
         });
         const result = await response.json().catch(() => ({}));
         if (!response.ok) {
-            showToast('Gagal memberi star', result.message || `Terjadi kesalahan (status ${response.status}).`, 'error');
+            result.detail || result.message || `Terjadi kesalahan (status ${response.status}).`
             return null;
         }
         button.classList.toggle('is-starred', result.is_starred);

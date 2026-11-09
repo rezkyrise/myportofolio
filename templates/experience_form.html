@@ -10,7 +10,9 @@
                 <form method="post"
                       action="{% if experience %}{% url 'main:update_experience' experience.id %}{% else %}{% url 'main:create_experience' %}{% endif %}"
                       enctype="multipart/form-data"
-                      class="data-form">
+                      class="data-form"
+                      id="experience-form"
+                      data-api-url="{% if experience %}{% url 'api:experience-detail' experience.id %}{% endif %}">
                     {% csrf_token %}
                     {% for field in form %}
                         <div class="form-group">
@@ -29,4 +31,49 @@
             </div>
         </section>
     </main>
+    {% if experience %}
+    <script>
+    const experienceEditForm = document.getElementById('experience-form');
+
+    experienceEditForm.addEventListener('submit', async function (event) {
+        event.preventDefault();
+
+        const submitButton = experienceEditForm.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+
+        try {
+            const response = await fetch(experienceEditForm.dataset.apiUrl, {
+                method: 'PATCH',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Accept': 'application/json',
+                },
+                body: new FormData(experienceEditForm),
+            });
+
+            const result = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                const errors = result.detail
+                    ? [result.detail]
+                    : Object.values(result).flat();
+
+                throw new Error(
+                    errors.join(' ') || `Gagal menyimpan (status ${response.status}).`
+                );
+            }
+
+            showToast('Berhasil', 'Experience berhasil diperbarui.', 'success');
+
+            setTimeout(() => {
+                window.location.href = "{% url 'main:show_experience' %}";
+            }, 700);
+        } catch (error) {
+            showToast('Gagal memperbarui experience', error.message, 'error');
+        } finally {
+            submitButton.disabled = false;
+        }
+    });
+    </script>
+{% endif %}
 {% endblock content %}

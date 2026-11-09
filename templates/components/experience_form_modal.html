@@ -3,7 +3,7 @@
      popover="auto"
      role="dialog"
      aria-modal="true"
-     aria-labelledby="add-experience-modal-title">
+     aria-labelledby="experience-modal-title">
     <button type="button"
             class="form-modal__backdrop"
             popovertarget="add-experience-modal"
@@ -17,7 +17,7 @@
                 popovertargetaction="hide"
                 aria-label="Tutup form tambah experience">×</button>
 
-        <h2 id="add-experience-modal-title">Tambah Experience Baru</h2>
+        <h2 id="experience-modal-title">Tambah Experience Baru</h2>
         <form id="experience-form"
               method="post"
               action="{% url 'main:create_experience_ajax' %}"
@@ -32,12 +32,17 @@
                     {% endfor %}
                 </div>
             {% endfor %}
+            <div id="experience-image-preview-container"
+                 class="experience-image-preview-container hide">
+                <p id="experience-image-preview-label">Pratinjau gambar</p>
+                <img id="experience-image-preview" alt="Pratinjau gambar Experience">
+            </div>
             <div class="form-modal__actions">
                 <button type="button"
                         class="button button-secondary"
                         popovertarget="add-experience-modal"
                         popovertargetaction="hide">Batal</button>
-                <button type="submit" class="button">Tambah Experience</button>
+                <button id="experience-submit-button" type="submit" class="button">Tambah Experience</button>
             </div>
         </form>
     </div>
