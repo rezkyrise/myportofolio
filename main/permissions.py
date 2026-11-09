@@ -1,7 +1,7 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 
-class IsSkillOwnerOrEditorOrReadOnly(BasePermission):
+class IsPortfolioOwnerOrEditorOrReadOnly(BasePermission):
     def has_permission(self, request, view):
         if request.method in SAFE_METHODS:
             return True
@@ -12,8 +12,11 @@ class IsSkillOwnerOrEditorOrReadOnly(BasePermission):
         if request.user.is_superuser:
             return True
 
-        # Editor boleh mengubah Skill, tetapi tidak membuat atau menghapus.
         return (
             request.method in ("PUT", "PATCH")
             and request.user.groups.filter(name="Editor").exists()
         )
+
+
+class IsSkillOwnerOrEditorOrReadOnly(IsPortfolioOwnerOrEditorOrReadOnly):
+    pass
