@@ -141,7 +141,7 @@ class SkillAPITest(APITestCase):
 
     def test_star_requires_login_and_toggles(self):
         response = self.client.post(self.star_url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
         self.client.force_authenticate(user=self.visitor)
 
@@ -276,7 +276,7 @@ class ExperienceAPITest(APITestCase):
         original_title = self.experience.title
 
         response = self.client.post(self.list_url, self.payload, format="json")
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(Experience.objects.count(), initial_count)
 
         response = self.client.patch(
@@ -284,10 +284,10 @@ class ExperienceAPITest(APITestCase):
             {"title": "Unauthorized change"},
             format="json",
         )
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
         response = self.client.delete(self.detail_url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(Experience.objects.count(), initial_count)
         self.experience.refresh_from_db()
         self.assertEqual(self.experience.title, original_title)
@@ -385,7 +385,7 @@ class ExperienceAPITest(APITestCase):
 
     def test_star_requires_login_and_toggles(self):
         response = self.client.post(self.star_url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(self.experience.starred_by.count(), 0)
 
         self.client.force_authenticate(user=self.regular_user)

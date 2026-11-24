@@ -32,7 +32,17 @@ DEBUG = True
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "m-rezky-myportofolio.pws.cs.ui.ac.id"]
 PRODUCTION = os.getenv('PRODUCTION', 'False').lower() == 'true'
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+}
 
+CORS_ALLOW_ALL_ORIGINS = not PRODUCTION
+
+if not PRODUCTION:
+    ALLOWED_HOSTS.append('10.0.2.2')
 # Application definition
 
 INSTALLED_APPS = [
@@ -44,10 +54,13 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'main',
     'rest_framework',
+    'corsheaders',
+    'rest_framework.authtoken',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
